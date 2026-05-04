@@ -1,0 +1,13 @@
+build/
+
+*.exe
+*.obj
+*.o
+*.pdb
+*.ilk
+
+.vs/
+.vscode/
+
+.DS_Store
+Thumbs.db
