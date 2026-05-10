@@ -1,0 +1,73 @@
+#include "Gamestate.h"
+#include "Champion.h"
+
+class Engine {
+public:
+    Engine();
+    ~Engine();
+
+    bool init();
+    void shutdown();
+
+    // setup
+    // init game state
+    void initGameState();
+    // init pool
+    void initChampPool();
+    // init shop
+    void initShop();
+    Champion getChamp(int cost);
+    // reset
+    void reset();
+
+    // economy
+    // level up
+    void levelup();
+    // roll shop
+    void roll();
+    // buy unit
+    void buy(int shopindex);
+    // sell unit
+    void sellboard(pair<int, int> index);
+    void sellbench(int index);
+    // lock shop
+    void lockshop();
+
+    // movements
+    // bench to bench
+    void benchtobench(int from, int to);
+    // bench to board
+    void benchtoboard(int from, pair<int,int> to);
+    // board to board
+    void boardtoboard(pair<int,int> from, pair<int,int> to);
+    // board to bench
+    void boardtobench(pair<int,int> from, int to);
+    // swap units
+
+
+    // items
+    // slam item
+    void slamBoard(int index, pair<int,int> position);
+    void slamBench(int index, int position);
+    // combine items
+    void combine(int index1, int index2);
+    // use reforger
+    void reforgerBench(int reforger, int index);
+    void reforgerBoard(int reforger, pair<int,int> index);
+    // use remover
+    void removerBench(int remover, int index);
+    void removerBoard(int remover, pair<int,int> index);
+
+    // can equip items
+
+    // automatic under update game state or some thing
+    // combine units
+    // check traits
+    // check level
+    // combine items
+
+
+
+private:
+    GameState gamestate;
+};

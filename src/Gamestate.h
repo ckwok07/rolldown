@@ -1,5 +1,7 @@
+#pragma once
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include "Champion.h"
 using namespace std;
 
@@ -23,5 +25,12 @@ struct GameState {
     // shop
     vector<Champion> shop = vector<Champion>(5);
     bool shoplocked = false;
-    vector<int> pool;
+    unordered_map<int,int> pool;
+
+    // miscellaneous
+    // pris ticket
+    // zed augment
+    bool zed = false;
+    // miss fortune
+
 };
