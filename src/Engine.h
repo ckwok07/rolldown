@@ -70,4 +70,5 @@ public:
 
 private:
     GameState gamestate;
+    mt19937 rng;
 };

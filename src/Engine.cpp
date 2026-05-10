@@ -4,6 +4,7 @@
 #include "Champion.h"
 
 Engine::Engine() {
+    rng = mt19937(random_device{}());
 }
 
 Engine::~Engine() {
@@ -45,7 +46,6 @@ void Engine::initChampPool() {
 }
 // init shop
 void Engine::initShop() {
-    mt19937 rng(1);
     vector<int> distribution = shopodds[gamestate.level - 2];
 
     for (int i = 0; i < 5; i++) {
@@ -53,34 +53,38 @@ void Engine::initShop() {
         int roll = dist(rng);
         
         if (roll < distribution[0]) {
-            // add one cost
+            gamestate.shop[i] = getChamp(1);
         } else if (roll < distribution[0] + distribution [1]) {
-            // add two cost
+            gamestate.shop[i] = getChamp(2);
         } else if (roll < distribution[0] + distribution [1] + distribution [2]) {
-            // add three cost
+            gamestate.shop[i] = getChamp(3);
         } else if (roll < distribution[0] + distribution [1] + distribution [2]+ distribution[3]) {
-            // add four cost
+           gamestate.shop[i] = getChamp(4);
         } else {
-            // add five cost
+            gamestate.shop[i] = getChamp(5);
         }
     }
 }
 
 Champion Engine::getChamp(int cost) {
-    for (auto champ : gamestate.pool) {
-        if (cost == 1) {
-            // 1 cost
-        } else if (cost == 2) {
-
-        } else if (cost == 3) {
-
-        } else if (cost == 4) {
-
-        } else {
-            
+    int total = 0;
+    for (const Champion& champ : ALL_CHAMPIONS) {
+        if (champ.cost == cost) {
+            total += gamestate.pool[champ.id];
         }
     }
-    return {41, "Aurelion Sol", 4, 1, {11, 25}, {}};
+
+    uniform_int_distribution<int> dist(0, total - 1);
+    int roll = dist(rng);
+
+    int cumulative = 0;
+    for (const Champion& champ : ALL_CHAMPIONS) {
+        if (champ.cost == cost) {
+            cumulative += gamestate.pool[champ.id];
+            if (roll < cumulative) return champ;
+        }
+    }
+    return ALL_CHAMPIONS[0];
 }
 // reset
 void Engine::reset() {
