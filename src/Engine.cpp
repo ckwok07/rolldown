@@ -97,6 +97,7 @@ void Engine::reset() {
 // economy
 // level up
 void Engine::levelup() {
+    if (gamestate.level >= 10) return;
     if (gamestate.gold >= 4) {
         gamestate.gold -= 4;
         gamestate.xp += 4;
