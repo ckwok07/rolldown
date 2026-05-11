@@ -10,7 +10,7 @@ struct GameState {
 
     // basics
     int gold = 0;
-    int level = 1;
+    int level = 8;
     int xp = 0;
     float time = 0.0f;
     int stage = 0;

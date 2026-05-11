@@ -1,5 +1,6 @@
 #include "Gamestate.h"
 #include "Champion.h"
+#include <random>
 
 class Engine {
 public:
@@ -65,10 +66,9 @@ public:
     // check traits
     // check level
     // combine items
-
+    GameState gamestate;
 
 
 private:
-    GameState gamestate;
     mt19937 rng;
 };
