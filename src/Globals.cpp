@@ -12,6 +12,10 @@ const vector<vector<int>> shopodds = {{100, 0, 0, 0, 0}, // 2
                                     {10, 17, 25, 33, 15}, // 9
                                     {5, 10, 20, 40, 25}}; // 10
 
+const vector<int> levelthresholds = {0,0,2, 6, 10, 20, 36, 60, 68, 68};
+
+const Champion nullChamp = {0, "null", 0, 0, {}, {}};
+
 const Champion Aatrox = {1, "Aatrox", 1, 1, {13, 22}, {}};
 const Champion Briar = {2, "Briar", 1, 1, {1, 16, 30}, {}};
 const Champion Caitlyn = {3, "Caitlyn", 1, 1, {13, 27}, {}};

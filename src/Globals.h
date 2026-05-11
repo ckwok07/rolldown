@@ -6,6 +6,9 @@
 using namespace std;
 
 extern const vector<vector<int>> shopodds;
+extern const vector<int> levelthresholds;
+
+extern const Champion nullChamp;
 
 extern const Champion Aatrox;
 extern const Champion Briar;
