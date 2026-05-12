@@ -231,6 +231,7 @@ void Engine::benchtobench(int from, int to) {
     Champion temp = gamestate.bench[to];
     gamestate.bench[to] = gamestate.bench[from];
     gamestate.bench[from] = temp;
+    updateGamestate();
 }
 // bench to board
 void Engine::benchtoboard(int from, pair<int,int> to) {
@@ -241,6 +242,7 @@ void Engine::benchtoboard(int from, pair<int,int> to) {
     Champion temp = gamestate.board[to.first][to.second];
     gamestate.board[to.first][to.second] = gamestate.bench[from];
     gamestate.bench[from] = temp;
+    updateGamestate();
 }
 // board to board
 void Engine::boardtoboard(pair<int,int> from, pair<int,int> to) {
@@ -249,6 +251,7 @@ void Engine::boardtoboard(pair<int,int> from, pair<int,int> to) {
     Champion temp = gamestate.board[to.first][to.second];
     gamestate.board[to.first][to.second] = gamestate.board[from.first][from.second];
     gamestate.board[from.first][from.second] = temp;
+    updateGamestate();
 }
 
 void Engine::boardtobench(pair<int,int> from, int to) {
@@ -258,6 +261,7 @@ void Engine::boardtobench(pair<int,int> from, int to) {
     Champion temp = gamestate.bench[to];
     gamestate.bench[to] = gamestate.board[from.first][from.second];
     gamestate.board[from.first][from.second] = temp;
+    updateGamestate();
 }
 // swap units
 
@@ -287,4 +291,21 @@ void Engine::removerBench(int remover, int index) {
 }
 void Engine::removerBoard(int remover, pair<int,int> index) {
 
+}
+
+void Engine::updateGamestate() {
+    unordered_map<int,int> activeTraits;
+
+    for (int row = 0; row < 4; row++) {
+        for (int col = 0; col < 7; col++) {
+            if (gamestate.board[row][col] == nullChamp) continue;
+            
+            for (auto trait : gamestate.board[row][col].traits) {
+                activeTraits[trait]++;
+            }
+
+        }
+    }
+
+    gamestate.activeTraits = activeTraits;
 }

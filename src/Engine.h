@@ -59,6 +59,8 @@ public:
     void removerBench(int remover, int index);
     void removerBoard(int remover, pair<int,int> index);
 
+    void updateGamestate();
+
     // can equip items
 
     // automatic under update game state or some thing

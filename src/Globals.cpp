@@ -16,6 +16,81 @@ const vector<int> levelthresholds = {0,0,2, 6, 10, 20, 36, 60, 68, 68, 0};
 
 const Champion nullChamp = {0, "null", 0, 0, {}, {}};
 
+const unordered_map<int, string> itemComponents = {{1, "BF Sword"}, 
+                                                {2, "Chain Vest"}, 
+                                                {3, "Frying Pan"}, 
+                                                {4, "Giant's Belt"}, 
+                                                {5, "Needlessly Large Rod"}, 
+                                                {6, "Negatron Cloak"}, 
+                                                {7, "Recurve Bow"}, 
+                                                {8, "Sparring Gloves"}, 
+                                                {9, "Spatula"}, 
+                                                {10, "Tear of the Goddess"}};
+const map<pair<int, int>, string> completedItems = {{{1, 1}, "Deathblade"},
+                                                {{1, 2}, "Edge of Night"},
+                                                {{1, 3}, "Marauder Emblem"},
+                                                {{1, 4}, "Sterak's Gage"},
+                                                {{1, 5}, "Hextech Gunblade"},
+                                                {{1, 6}, "Bloodthirster"},
+                                                {{1, 7}, "Giant Slayer"},
+                                                {{1, 8}, "Infinity Edge"},
+                                                {{1, 9}, "Dark Star Emblem"},
+                                                {{1, 10}, "Spear of Shojin"},
+
+                                                {{2, 2}, "Bramble Vest"},
+                                                {{2, 3}, "Bastion Emblem"},
+                                                {{2, 4}, "Sunfire Cape"},
+                                                {{2, 5}, "Crownguard"},
+                                                {{2, 6}, "Gargoyle Stoneplate"},
+                                                {{2, 7}, "Titan's Resolve"},
+                                                {{2, 8}, "Steadfast Heart"},
+                                                {{2, 9}, "Arbiter Emblem"},
+                                                {{2, 10}, "Protector's Vow"},
+
+                                                {{3, 3}, "Tactician's Shield"},
+                                                {{3, 4}, "Brawler Emblem"},
+                                                {{3, 5}, "Conduit Emblem"},
+                                                {{3, 6}, "Voyager Emblem"},
+                                                {{3, 7}, "Challenger Emblem"},
+                                                {{3, 8}, "Rogue Emblem"},
+                                                {{3, 9}, "Tactician's Cape"},
+                                                {{3, 10}, "Fateweaver Emblem"},
+
+                                                {{4, 4}, "Warmog's Armor"},
+                                                {{4, 5}, "Morellonomicon"},
+                                                {{4, 6}, "Spirit Visage"},
+                                                {{4, 7}, "Red Buff"},
+                                                {{4, 8}, "Guardbreaker"},
+                                                {{4, 9}, "Vanguard Emblem"},
+                                                {{4, 10}, "Redemption"},
+
+                                                {{5, 5}, "Rabadon's Deathcap"},
+                                                {{5, 6}, "Ionic Spark"},
+                                                {{5, 7}, "Guinsoo's Rageblade"},
+                                                {{5, 8}, "Jeweled Gauntlet"},
+                                                {{5, 9}, "N.O.V.A. Emblem"},
+                                                {{5, 10}, "Archangel's Staff"},
+
+                                                {{6, 6}, "Dragon's Claw"},
+                                                {{6, 7}, "Adaptive Helm"},
+                                                {{6, 8}, "Quicksilver"},
+                                                {{6, 9}, "Primordian Emblem"},
+                                                {{6, 10}, "Evenshroud"},
+
+                                                {{7, 7}, "Kraken's Fury"},
+                                                {{7, 8}, "Last Whisper"},
+                                                {{7, 9}, "Stargazer Emblem"},
+                                                {{7, 10}, "Statikk Shiv"},
+
+                                                {{8, 8}, "Thief's Gloves"},
+                                                {{8, 9}, "Meeple Emblem"},
+                                                {{8, 10}, "Hand of Justice"},
+
+                                                {{9, 9}, "Tactician's Crown"},
+                                                {{9, 10}, "Timebreaker Emblem"},
+
+                                                {{10, 10}, "Blue Buff"}};
+
 const Champion Aatrox = {1, "Aatrox", 1, 1, {13, 22}, {}};
 const Champion Briar = {2, "Briar", 1, 1, {1, 16, 30}, {}};
 const Champion Caitlyn = {3, "Caitlyn", 1, 1, {13, 27}, {}};

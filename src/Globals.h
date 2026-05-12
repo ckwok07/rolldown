@@ -2,13 +2,18 @@
 #include "Champion.h"
 #include <string>
 #include <unordered_map>
+#include <map>
 #include <vector>
+#include <set>
 using namespace std;
 
 extern const vector<vector<int>> shopodds;
 extern const vector<int> levelthresholds;
 
 extern const Champion nullChamp;
+
+extern const unordered_map<int, string> itemComponents;
+extern const map<pair<int,int>, string> completedItems;
 
 extern const Champion Aatrox;
 extern const Champion Briar;
