@@ -269,28 +269,146 @@ void Engine::boardtobench(pair<int,int> from, int to) {
 // items
 // slam item
 void Engine::slamBoard(int index, pair<int,int> position) {
+    if (holds_alternative<int>(gamestate.items[index]) && get<int>(gamestate.items[index]) == -1) return;
+    if (gamestate.board[position.first][position.second] == nullChamp) return;
+    if (gamestate.board[position.first][position.second].items.size() == 3) return;
 
+    gamestate.board[position.first][position.second].items.push_back(gamestate.items[index]);
+    gamestate.items.erase(gamestate.items.begin() + index);
+    updateGamestate();
 }
 void Engine::slamBench(int index, int position) {
+    if (holds_alternative<int>(gamestate.items[index]) && get<int>(gamestate.items[index]) == -1) return;
+    if (gamestate.bench[position] == nullChamp) return;
+    if (gamestate.bench[position].items.size() == 3) return;
 
+    gamestate.bench[position].items.push_back(gamestate.items[index]);
+    gamestate.items.erase(gamestate.items.begin() + index);
 }
 // combine items
 void Engine::combine(int index1, int index2) {
+    if (holds_alternative<int>(gamestate.items[index1]) && get<int>(gamestate.items[index1]) == -1) return;
+    if (holds_alternative<int>(gamestate.items[index2]) && get<int>(gamestate.items[index2]) == -1) return;
 
+    // both must be components
+    if (!holds_alternative<int>(gamestate.items[index1])) return;
+    if (!holds_alternative<int>(gamestate.items[index2])) return;
+
+    int a = get<int>(gamestate.items[index1]);
+    int b = get<int>(gamestate.items[index2]);
+    if (a > b) swap(a, b);
+
+    pair<int,int> combined = {a, b};
+    if (completedItems.find(combined) == completedItems.end()) return;
+
+    gamestate.items[index1] = combined;
+    gamestate.items[index2] = -1;
 }
 // use reforger
 void Engine::reforgerBench(int reforger, int index) {
+    if (gamestate.bench[index] == nullChamp) return;
+    if (gamestate.bench[index].items.empty()) return;
 
+    uniform_int_distribution<int> itemDist(0, gamestate.bench[index].items.size() - 1);
+    int itemIndex = itemDist(rng);
+    auto& oldItem = gamestate.bench[index].items[itemIndex];
+
+    if (holds_alternative<int>(oldItem)) {
+        oldItem = reforgeComponent(get<int>(oldItem), rng);
+    } else {
+        oldItem = reforgeItem(get<pair<int,int>>(oldItem), rng);
+    }
+
+    gamestate.items.erase(gamestate.items.begin() + reforger);
 }
-void Engine::reforgerBoard(int reforger, pair<int,int> index) {
 
+void Engine::reforgerBoard(int reforger, pair<int,int> index) {
+    if (gamestate.board[index.first][index.second] == nullChamp) return;
+    if (gamestate.board[index.first][index.second].items.empty()) return;
+
+    uniform_int_distribution<int> itemDist(0, gamestate.board[index.first][index.second].items.size() - 1);
+    int itemIndex = itemDist(rng);
+    auto& oldItem = gamestate.board[index.first][index.second].items[itemIndex];
+
+    if (holds_alternative<int>(oldItem)) {
+        oldItem = reforgeComponent(get<int>(oldItem), rng);
+    } else {
+        oldItem = reforgeItem(get<pair<int,int>>(oldItem), rng);
+    }
+
+    gamestate.items.erase(gamestate.items.begin() + reforger);
+}
+
+bool Engine::isEmblem(pair<int,int> item) {
+    if (item == make_pair(3,3) || item == make_pair(3,9) || item == make_pair(9,9)) return false;
+    return item.first == 3 || item.first == 9 || item.second == 3 || item.second == 9;
+}
+
+bool Engine::isTacTrio(pair<int,int> item) {
+    return item == make_pair(3,3) || item == make_pair(3,9) || item == make_pair(9,9);
+}
+
+pair<int,int> Engine::reforgeItem(pair<int,int> old, mt19937& rng) {
+    // tac trio
+    if (isTacTrio(old)) {
+        vector<pair<int,int>> options = {{3,3}, {3,9}, {9,9}};
+        options.erase(remove(options.begin(), options.end(), old), options.end());
+        uniform_int_distribution<int> dist(0, options.size() - 1);
+        return options[dist(rng)];
+    }
+
+    // emblem
+    if (isEmblem(old)) {
+        vector<pair<int,int>> emblems;
+        for (auto& item : completedItems) {
+            if (isEmblem(item.first) && item.first != old) {
+                emblems.push_back(item.first);
+            }
+        }
+        uniform_int_distribution<int> dist(0, emblems.size() - 1);
+        return emblems[dist(rng)];
+    }
+
+    // regular completed
+    vector<pair<int,int>> regulars;
+    for (auto& item : completedItems) {
+        if (!isEmblem(item.first) && !isTacTrio(item.first) && item.first != old) {
+            regulars.push_back(item.first);
+        }
+    }
+    uniform_int_distribution<int> dist(0, regulars.size() - 1);
+    return regulars[dist(rng)];
+}
+
+int Engine::reforgeComponent(int old, mt19937& rng) {
+    if (old == 3) return 9;
+    if (old == 9) return 3;
+    vector<int> components = {1, 2, 4, 5, 6, 7, 8, 10};
+    components.erase(remove(components.begin(), components.end(), old), components.end());
+    uniform_int_distribution<int> dist(0, components.size() - 1);
+    return components[dist(rng)];
 }
 // use remover
 void Engine::removerBench(int remover, int index) {
+    if (gamestate.bench[index] == nullChamp) return;
+    if (gamestate.bench[index].items.empty()) return;
 
+    for (auto& item : gamestate.bench[index].items) {
+        gamestate.items.push_back(item);
+    }
+    gamestate.bench[index].items.clear();
+    gamestate.items.erase(gamestate.items.begin() + remover);
 }
-void Engine::removerBoard(int remover, pair<int,int> index) {
 
+void Engine::removerBoard(int remover, pair<int,int> index) {
+    if (gamestate.board[index.first][index.second] == nullChamp) return;
+    if (gamestate.board[index.first][index.second].items.empty()) return;
+
+    for (auto& item : gamestate.board[index.first][index.second].items) {
+        gamestate.items.push_back(item);
+    }
+    gamestate.board[index.first][index.second].items.clear();
+    gamestate.items.erase(gamestate.items.begin() + remover);
 }
 
 void Engine::updateGamestate() {

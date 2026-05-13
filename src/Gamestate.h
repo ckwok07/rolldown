@@ -3,7 +3,9 @@
 #include <vector>
 #include <unordered_map>
 #include "Champion.h"
+#include <variant>
 using namespace std;
+using Item = variant<int, pair<int,int>>;
 
 struct GameState {
     // gold shop, board, bench, augments, time, level, traits, items, 
@@ -20,7 +22,7 @@ struct GameState {
     vector<vector<Champion>> board = vector<vector<Champion>>(4, vector<Champion>(7));
     int boardUnitCount = 0;
     unordered_map<int, int> activeTraits;
-    vector<int> items;
+    vector<Item> items;
 
     // shop
     vector<Champion> shop = vector<Champion>(5);
