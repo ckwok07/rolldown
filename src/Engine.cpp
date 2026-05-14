@@ -1,6 +1,7 @@
 #include "Engine.h"
 #include "Globals.h"
 #include <random>
+#include <map>
 #include "Champion.h"
 
 Engine::Engine() {
@@ -87,7 +88,7 @@ Champion Engine::getChamp(int cost) {
             }
         }
     }
-    return ALL_CHAMPIONS[0];
+    return nullChamp;
 }
 // reset
 void Engine::reset() {
@@ -118,6 +119,12 @@ void Engine::roll() {
         Champion temp = gamestate.shop[i];
         uniform_int_distribution<int> dist(0, 99);
         int roll = dist(rng);
+
+        if (temp == nullChamp) {
+            continue;
+        } else {
+            gamestate.pool[temp.id]++;
+        }
         
         if (roll < distribution[0]) {
             gamestate.shop[i] = getChamp(1);
@@ -130,17 +137,16 @@ void Engine::roll() {
         } else {
             gamestate.shop[i] = getChamp(5);
         }
-        
-        if (temp.id == 0) {
-            continue;
-        } else {
-            gamestate.pool[temp.id]++;
-        }
     }
+}
+
+void Engine::updateShopHighlights() {
+    return;
 }
 // buy unit
 void Engine::buy(int shopindex) {
-
+    if (shopindex < 0 || shopindex > 4) return;
+    if (gamestate.shop[shopindex] == nullChamp) return;
     if (gamestate.gold < gamestate.shop[shopindex].cost) return;
 
     int emptySlot = -1;
@@ -153,9 +159,11 @@ void Engine::buy(int shopindex) {
     if (emptySlot == -1) return;
 
     Champion bought = gamestate.shop[shopindex];
+    if (bought == nullChamp) return;
     gamestate.gold -= bought.cost;
     gamestate.shop[shopindex] = nullChamp;
     gamestate.bench[emptySlot] = bought;
+    updateGamestate();
 }
 
 // sell unit
@@ -178,6 +186,10 @@ void Engine::sellboard(pair<int, int> index) {
     else if (sold.cost == 3) maxCopies = 18;
     else if (sold.cost == 4) maxCopies = 10;
     else if (sold.cost == 5) maxCopies = 9;
+
+    for (int i = 0; i < sold.items.size(); i++) {
+        gamestate.items.push_back(sold.items[i]);
+    }
 
     int copies = 1;
     if (sold.starLevel == 2) copies = 3;
@@ -208,6 +220,10 @@ void Engine::sellbench(int index) {
     else if (sold.cost == 3) maxCopies = 18;
     else if (sold.cost == 4) maxCopies = 10;
     else if (sold.cost == 5) maxCopies = 9;
+
+    for (int i = 0; i < sold.items.size(); i++) {
+        gamestate.items.push_back(sold.items[i]);
+    }
 
     int copies = 1;
     if (sold.starLevel == 2) copies = 3;
@@ -426,4 +442,153 @@ void Engine::updateGamestate() {
     }
 
     gamestate.activeTraits = activeTraits;
+    checkStarUp();
+}
+
+void Engine::checkStarUp() {
+    bool starredUp = false;
+
+    // key = {champion id, star level}
+    map<pair<int, int>, vector<pair<int, bool>>> champLocations;
+
+    for (int i = 0; i < gamestate.bench.size(); i++) {
+        if (!(gamestate.bench[i] == nullChamp)) {
+            Champion& champ = gamestate.bench[i];
+
+            if (champ.starLevel < 3) {
+                champLocations[{champ.id, champ.starLevel}].push_back({i, true});
+            }
+        }
+    }
+
+    for (int row = 0; row < 4; row++) {
+        for (int col = 0; col < 7; col++) {
+            if (!(gamestate.board[row][col] == nullChamp)) {
+                Champion& champ = gamestate.board[row][col];
+
+                if (champ.starLevel < 3) {
+                    int flatIndex = row * 7 + col;
+                    champLocations[{champ.id, champ.starLevel}].push_back({flatIndex, false});
+                }
+            }
+        }
+    }
+
+    auto getChampAt = [&](int idx, bool isBench) -> Champion& {
+        if (isBench) return gamestate.bench[idx];
+        return gamestate.board[idx / 7][idx % 7];
+    };
+
+    auto score = [&](pair<int, bool> location) {
+        int idx = location.first;
+        bool isBench = location.second;
+
+        Champion& c = getChampAt(idx, isBench);
+
+        int s = 0;
+
+        for (auto& item : c.items) {
+            bool completed = holds_alternative<pair<int, int>>(item);
+
+            if (!isBench) {
+                s += completed ? 3 : 1;
+            } else {
+                s += completed ? 2 : 0;
+            }
+        }
+
+        if (!isBench) s += 100;
+
+        return s;
+    };
+
+    for (auto& [key, locations] : champLocations) {
+        if (locations.size() < 3) continue;
+
+        // priotise 1 copy
+        sort(locations.begin(), locations.end(), [&](pair<int, bool> a, pair<int, bool> b) {
+            return score(a) > score(b);
+        });
+
+        // takes 3 copies
+        vector<pair<int, bool>> consumed = {
+            locations[0],
+            locations[1],
+            locations[2]
+        };
+
+        pair<int, bool> bestLocation = consumed[0];
+
+        vector<variant<int, pair<int, int>>> completedBoard;
+        vector<variant<int, pair<int, int>>> completedBench;
+        vector<variant<int, pair<int, int>>> componentBoard;
+        vector<variant<int, pair<int, int>>> componentBench;
+
+        // collect items from 3 copies
+        for (auto& location : consumed) {
+            int idx = location.first;
+            bool isBench = location.second;
+
+            Champion& c = getChampAt(idx, isBench);
+
+            for (auto& item : c.items) {
+                bool completed = holds_alternative<pair<int, int>>(item);
+
+                if (!isBench && completed) {
+                    completedBoard.push_back(item);
+                } else if (isBench && completed) {
+                    completedBench.push_back(item);
+                } else if (!isBench) {
+                    componentBoard.push_back(item);
+                } else {
+                    componentBench.push_back(item);
+                }
+            }
+        }
+
+        vector<variant<int, pair<int, int>>> newItems;
+
+        for (auto& item : completedBoard) {
+            if (newItems.size() >= 3) break;
+            newItems.push_back(item);
+        }
+
+        for (auto& item : completedBench) {
+            if (newItems.size() >= 3) break;
+            newItems.push_back(item);
+        }
+
+        for (auto& item : componentBoard) {
+            if (newItems.size() >= 3) break;
+            newItems.push_back(item);
+        }
+
+        for (auto& item : componentBench) {
+            if (newItems.size() >= 3) break;
+            newItems.push_back(item);
+        }
+
+        Champion& best = getChampAt(bestLocation.first, bestLocation.second);
+        best.starLevel++;
+        best.items = newItems;
+
+        // delete 2 other copies
+        for (int i = 1; i < consumed.size(); i++) {
+            int idx = consumed[i].first;
+            bool isBench = consumed[i].second;
+
+            getChampAt(idx, isBench) = nullChamp;
+
+            if (!isBench) {
+                gamestate.boardUnitCount--;
+            }
+        }
+
+        starredUp = true;
+        break;
+    }
+
+    if (starredUp) {
+        checkStarUp();
+    }
 }

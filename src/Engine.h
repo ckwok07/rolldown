@@ -44,7 +44,7 @@ public:
     // board to bench
     void boardtobench(pair<int,int> from, int to);
     // swap units
-
+    void updateShopHighlights();
 
     // items
     // slam item
@@ -77,4 +77,5 @@ private:
     bool isTacTrio(pair<int,int> item);
     pair<int,int> reforgeItem(pair<int,int> old, mt19937& rng);
     int reforgeComponent(int old, mt19937& rng);
+    void checkStarUp();
 };

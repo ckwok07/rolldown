@@ -26,6 +26,8 @@ struct GameState {
 
     // shop
     vector<Champion> shop = vector<Champion>(5);
+    vector<bool>    shopSameChampion = vector<bool>(5, false);
+    vector<bool> shopStarUppable = vector<bool>(5, false);
     bool shoplocked = false;
     unordered_map<int,int> pool;
 
