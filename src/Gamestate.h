@@ -5,6 +5,7 @@
 #include "Champion.h"
 #include <variant>
 using namespace std;
+#include "Globals.h"
 using Item = variant<int, pair<int,int>>;
 
 struct GameState {
@@ -26,7 +27,7 @@ struct GameState {
 
     // shop
     vector<Champion> shop = vector<Champion>(5);
-    vector<bool>    shopSameChampion = vector<bool>(5, false);
+    vector<bool> shopSameChampion = vector<bool>(5, false);
     vector<bool> shopStarUppable = vector<bool>(5, false);
     bool shoplocked = false;
     unordered_map<int,int> pool;
@@ -36,5 +37,7 @@ struct GameState {
     // zed augment
     bool zed = false;
     // miss fortune
+
+    Champion tempSlot = nullChamp;
 
 };

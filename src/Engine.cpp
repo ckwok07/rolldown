@@ -49,21 +49,54 @@ void Engine::initChampPool() {
 void Engine::initShop() {
     vector<int> distribution = shopodds[gamestate.level - 2];
 
+    auto hasChamps = [&](int c) {
+        int total = 0;
+        for (const Champion& champ : ALL_CHAMPIONS) {
+            if (champ.cost == c) total += gamestate.pool[champ.id];
+        }
+        return total > 0;
+    };
+
+    auto getCost = [&](int cost) -> int {
+        if (hasChamps(cost)) return cost;
+        if (cost == 1) {
+            for (int c = 2; c <= 5; c++) if (hasChamps(c)) return c;
+            return 0;
+        }
+        if (cost == 5) {
+            for (int c = 4; c >= 1; c--) if (hasChamps(c)) return c;
+            return 0;
+        }
+        uniform_int_distribution<int> coin(0, 1);
+        int dir = coin(rng) == 0 ? -1 : 1;
+        for (int c = cost + dir; c >= 1 && c <= 5; c += dir) {
+            if (hasChamps(c)) return c;
+        }
+        dir = -dir;
+        for (int c = cost + dir; c >= 1 && c <= 5; c += dir) {
+            if (hasChamps(c)) return c;
+        }
+        return 0;
+    };
+
     for (int i = 0; i < 5; i++) {
         uniform_int_distribution<int> dist(0, 99);
         int roll = dist(rng);
-        
-        if (roll < distribution[0]) {
-            gamestate.shop[i] = getChamp(1);
-        } else if (roll < distribution[0] + distribution [1]) {
-            gamestate.shop[i] = getChamp(2);
-        } else if (roll < distribution[0] + distribution [1] + distribution [2]) {
-            gamestate.shop[i] = getChamp(3);
-        } else if (roll < distribution[0] + distribution [1] + distribution [2]+ distribution[3]) {
-           gamestate.shop[i] = getChamp(4);
-        } else {
-            gamestate.shop[i] = getChamp(5);
-        }
+
+        int rolledCost = 0;
+        if (roll < distribution[0]) rolledCost = 1;
+        else if (roll < distribution[0] + distribution[1]) rolledCost = 2;
+        else if (roll < distribution[0] + distribution[1] + distribution[2]) rolledCost = 3;
+        else if (roll < distribution[0] + distribution[1] + distribution[2] + distribution[3]) rolledCost = 4;
+        else rolledCost = 5;
+
+        int cost = getCost(rolledCost);
+        gamestate.shop[i] = cost == 0 ? nullChamp : getChamp(cost);
+    }
+
+    for (int i = 0; i < 5; i++) {
+        gamestate.shopSameChampion[i] = highlight(gamestate.shop[i]);
+        gamestate.shopStarUppable[i] = wouldStarUp(gamestate.shop[i]);
     }
 }
 
@@ -74,6 +107,8 @@ Champion Engine::getChamp(int cost) {
             total += gamestate.pool[champ.id];
         }
     }
+
+    if (total == 0) return nullChamp;
 
     uniform_int_distribution<int> dist(0, total - 1);
     int roll = dist(rng);
@@ -115,34 +150,63 @@ void Engine::roll() {
     vector<int> distribution = shopodds[gamestate.level - 2];
     gamestate.gold -= 2;
 
+    auto hasChamps = [&](int c) {
+        int total = 0;
+        for (const Champion& champ : ALL_CHAMPIONS) {
+            if (champ.cost == c) total += gamestate.pool[champ.id];
+        }
+        return total > 0;
+    };
+
+    auto getCost = [&](int cost) -> int {
+        if (hasChamps(cost)) return cost;
+        if (cost == 1) {
+            for (int c = 2; c <= 5; c++) if (hasChamps(c)) return c;
+            return 0;
+        }
+        if (cost == 5) {
+            for (int c = 4; c >= 1; c--) if (hasChamps(c)) return c;
+            return 0;
+        }
+        uniform_int_distribution<int> coin(0, 1);
+        int dir = coin(rng) == 0 ? -1 : 1;
+        for (int c = cost + dir; c >= 1 && c <= 5; c += dir) {
+            if (hasChamps(c)) return c;
+        }
+        dir = -dir;
+        for (int c = cost + dir; c >= 1 && c <= 5; c += dir) {
+            if (hasChamps(c)) return c;
+        }
+        return 0;
+    };
+
     for (int i = 0; i < 5; i++) {
         Champion temp = gamestate.shop[i];
+
+        if (!(temp == nullChamp)) {
+            gamestate.pool[temp.id]++;
+        }
+
         uniform_int_distribution<int> dist(0, 99);
         int roll = dist(rng);
 
-        if (temp == nullChamp) {
-            continue;
-        } else {
-            gamestate.pool[temp.id]++;
-        }
-        
-        if (roll < distribution[0]) {
-            gamestate.shop[i] = getChamp(1);
-        } else if (roll < distribution[0] + distribution [1]) {
-            gamestate.shop[i] = getChamp(2);
-        } else if (roll < distribution[0] + distribution [1] + distribution [2]) {
-            gamestate.shop[i] = getChamp(3);
-        } else if (roll < distribution[0] + distribution [1] + distribution [2]+ distribution[3]) {
-           gamestate.shop[i] = getChamp(4);
-        } else {
-            gamestate.shop[i] = getChamp(5);
-        }
+        int rolledCost = 0;
+        if (roll < distribution[0]) rolledCost = 1;
+        else if (roll < distribution[0] + distribution[1]) rolledCost = 2;
+        else if (roll < distribution[0] + distribution[1] + distribution[2]) rolledCost = 3;
+        else if (roll < distribution[0] + distribution[1] + distribution[2] + distribution[3]) rolledCost = 4;
+        else rolledCost = 5;
+
+        int cost = getCost(rolledCost);
+        gamestate.shop[i] = cost == 0 ? nullChamp : getChamp(cost);
+    }
+
+    for (int i = 0; i < 5; i++) {
+        gamestate.shopSameChampion[i] = highlight(gamestate.shop[i]);
+        gamestate.shopStarUppable[i] = wouldStarUp(gamestate.shop[i]);
     }
 }
 
-void Engine::updateShopHighlights() {
-    return;
-}
 // buy unit
 void Engine::buy(int shopindex) {
     if (shopindex < 0 || shopindex > 4) return;
@@ -156,13 +220,20 @@ void Engine::buy(int shopindex) {
             break;
         }
     }
-    if (emptySlot == -1) return;
+    if (emptySlot == -1 && !wouldStarUp(gamestate.shop[shopindex])) return;
+
+    
 
     Champion bought = gamestate.shop[shopindex];
     if (bought == nullChamp) return;
+
+    if (emptySlot != -1) {
+        gamestate.bench[emptySlot] = bought;
+    } else {
+        gamestate.tempSlot = bought;
+    }
     gamestate.gold -= bought.cost;
     gamestate.shop[shopindex] = nullChamp;
-    gamestate.bench[emptySlot] = bought;
     updateGamestate();
 }
 
@@ -199,6 +270,7 @@ void Engine::sellboard(pair<int, int> index) {
 
     gamestate.board[index.first][index.second] = nullChamp;
     gamestate.boardUnitCount--;
+    updateGamestate();
 }
 
 void Engine::sellbench(int index) {
@@ -232,6 +304,7 @@ void Engine::sellbench(int index) {
     gamestate.pool[sold.id] = min(gamestate.pool[sold.id] + copies, maxCopies);
 
     gamestate.bench[index] = nullChamp;
+    updateGamestate();
 }
 
 // lock shop
@@ -251,9 +324,11 @@ void Engine::benchtobench(int from, int to) {
 }
 // bench to board
 void Engine::benchtoboard(int from, pair<int,int> to) {
-    if (gamestate.boardUnitCount >= gamestate.level) return;
     if (gamestate.bench[from] == nullChamp) return;
-    if (gamestate.board[to.first][to.second] == nullChamp) gamestate.boardUnitCount++;
+    if (gamestate.board[to.first][to.second] == nullChamp && gamestate.boardUnitCount >= gamestate.level) return;
+    if (gamestate.board[to.first][to.second] == nullChamp && gamestate.boardUnitCount < gamestate.level) {
+        gamestate.boardUnitCount++;
+    }
 
     Champion temp = gamestate.board[to.first][to.second];
     gamestate.board[to.first][to.second] = gamestate.bench[from];
@@ -428,6 +503,18 @@ void Engine::removerBoard(int remover, pair<int,int> index) {
 }
 
 void Engine::updateGamestate() {
+    checkStarUp();
+
+    if (!(gamestate.tempSlot == nullChamp)) {
+        for (int i = 0; i < 9; i++) {
+            if (gamestate.bench[i] == nullChamp) {
+                gamestate.bench[i] = gamestate.tempSlot;
+                gamestate.tempSlot = nullChamp;
+                break;
+            }
+        }
+    }
+
     unordered_map<int,int> activeTraits;
 
     for (int row = 0; row < 4; row++) {
@@ -442,7 +529,6 @@ void Engine::updateGamestate() {
     }
 
     gamestate.activeTraits = activeTraits;
-    checkStarUp();
 }
 
 void Engine::checkStarUp() {
@@ -461,6 +547,13 @@ void Engine::checkStarUp() {
         }
     }
 
+    if (!(gamestate.tempSlot == nullChamp)) {
+        Champion& champ = gamestate.tempSlot;
+        if (champ.starLevel < 3) {
+            champLocations[{champ.id, champ.starLevel}].push_back({-1, true}); // -1 = tempSlot
+        }
+    }
+
     for (int row = 0; row < 4; row++) {
         for (int col = 0; col < 7; col++) {
             if (!(gamestate.board[row][col] == nullChamp)) {
@@ -475,6 +568,7 @@ void Engine::checkStarUp() {
     }
 
     auto getChampAt = [&](int idx, bool isBench) -> Champion& {
+        if (idx == -1) return gamestate.tempSlot;
         if (isBench) return gamestate.bench[idx];
         return gamestate.board[idx / 7][idx % 7];
     };
@@ -482,6 +576,7 @@ void Engine::checkStarUp() {
     auto score = [&](pair<int, bool> location) {
         int idx = location.first;
         bool isBench = location.second;
+        if (idx == -1) return -1;
 
         Champion& c = getChampAt(idx, isBench);
 
@@ -591,4 +686,31 @@ void Engine::checkStarUp() {
     if (starredUp) {
         checkStarUp();
     }
+}
+
+bool Engine::wouldStarUp(Champion champ) {
+    if (champ == nullChamp) return false;
+    int count = 0;
+    for (int i = 0; i < 9; i++) {
+        if (gamestate.bench[i].id == champ.id && gamestate.bench[i].starLevel == champ.starLevel) count++;
+    }
+    for (int row = 0; row < 4; row++) {
+        for (int col = 0; col < 7; col++) {
+            if (gamestate.board[row][col].id == champ.id && gamestate.board[row][col].starLevel == champ.starLevel) count++;
+        }
+    }
+    return count == 2;
+}
+
+bool Engine::highlight(Champion champ) {
+    if (champ == nullChamp) return false;
+    for (int i = 0; i < 9; i++) {
+        if (gamestate.bench[i].id == champ.id) return true;
+    }
+    for (int row = 0; row < 4; row++) {
+        for (int col = 0; col < 7; col++) {
+            if (gamestate.board[row][col].id == champ.id) return true;
+        }
+    }
+    return false;
 }

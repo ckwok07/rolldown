@@ -73,9 +73,13 @@ public:
 
 private:
     mt19937 rng;
+
     bool isEmblem(pair<int,int> item);
     bool isTacTrio(pair<int,int> item);
     pair<int,int> reforgeItem(pair<int,int> old, mt19937& rng);
     int reforgeComponent(int old, mt19937& rng);
     void checkStarUp();
+
+    bool wouldStarUp(Champion champ);
+    bool highlight(Champion champ);
 };
