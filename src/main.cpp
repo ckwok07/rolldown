@@ -384,24 +384,38 @@ void test_shop_star_uppable_buy_condition() {
     cout << "test_shop_star_uppable_buy_condition passed\n";
 }
 
+// int main() {
+//     test_buy_5_roll_buy_4_block_10th();
+//     test_star_up_to_2_star();
+//     test_star_up_to_3_star();
+
+//     test_full_bench_star_uppable_buy_succeeds();
+//     test_full_bench_non_star_uppable_buy_fails();
+
+//     test_bench_to_board_empty_increments_count();
+//     test_bench_to_board_occupied_swaps_no_count_change();
+//     test_bench_to_board_empty_blocked_at_cap();
+
+//     test_board_to_bench_empty_decrements_count();
+//     test_board_to_bench_occupied_swaps_no_count_change();
+
+//     test_shop_same_champion_flag_manual();
+//     test_shop_star_uppable_buy_condition();
+
+//     cout << "All tests passed\n";
+//     return 0;
+// }
+
+#include "gui/Gui.h"
+
 int main() {
-    test_buy_5_roll_buy_4_block_10th();
-    test_star_up_to_2_star();
-    test_star_up_to_3_star();
+    GUI gui;
 
-    test_full_bench_star_uppable_buy_succeeds();
-    test_full_bench_non_star_uppable_buy_fails();
+    if (!gui.init()) {
+        return -1;
+    }
 
-    test_bench_to_board_empty_increments_count();
-    test_bench_to_board_occupied_swaps_no_count_change();
-    test_bench_to_board_empty_blocked_at_cap();
+    gui.run();
 
-    test_board_to_bench_empty_decrements_count();
-    test_board_to_bench_occupied_swaps_no_count_change();
-
-    test_shop_same_champion_flag_manual();
-    test_shop_star_uppable_buy_condition();
-
-    cout << "All tests passed\n";
     return 0;
 }

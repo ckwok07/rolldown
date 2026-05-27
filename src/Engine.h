@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Gamestate.h"
 #include "Champion.h"
 #include <random>

@@ -26,7 +26,12 @@ void Engine::shutdown() {
 // setup
 // init game state
 void Engine::initGameState() {
-
+    gamestate.gold = 50;
+    gamestate.level = 8;
+    gamestate.time = 30.0;
+    gamestate.stage = 28;
+    initChampPool();
+    initShop();
 }
 
 // init pool
@@ -127,7 +132,7 @@ Champion Engine::getChamp(int cost) {
 }
 // reset
 void Engine::reset() {
-
+    initGameState();
 }
 
 // economy
@@ -315,6 +320,8 @@ void Engine::lockshop() {
 // movements
 // bench to bench
 void Engine::benchtobench(int from, int to) {
+    if (from > 8 || from < 0) return;
+    if (to > 8 || to < 0) return;
     if (gamestate.bench[from] == nullChamp) return;
 
     Champion temp = gamestate.bench[to];
