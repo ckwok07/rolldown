@@ -41,7 +41,7 @@ void GUI::run() {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-
+        // debugging
         ImGui::Begin("TFT Debug");
 
         ImGui::Text("Gold: %d", engine.gamestate.gold);
@@ -120,8 +120,63 @@ void GUI::run() {
                 }
             }
         }
+        ImGui::End();
+        // debug end
+
+        // main layout
+        ImGui::SetNextWindowPos(ImVec2(0, 0));
+        ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+
+        ImGui::Begin("Root", nullptr,
+            ImGuiWindowFlags_NoTitleBar |
+            ImGuiWindowFlags_NoResize |
+            ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoCollapse
+        );
+
+        // shop start
+
+        float slotWidth = 180.0f;
+        float slotHeight = 120.0f;
+        float gap = 10.0f;
+        float bottomPadding = 40.0f;
+
+        float totalShopWidth = 5.0f * slotWidth + 4.0f * gap;
+
+        ImVec2 windowSize = ImGui::GetWindowSize();
+
+        float shopX = (windowSize.x - totalShopWidth) / 2.0f;
+        float shopY = windowSize.y - slotHeight - bottomPadding;
+
+        ImGui::SetCursorPos(ImVec2(shopX, shopY));
+
+        for (int i = 0; i < engine.gamestate.shop.size(); i++) {
+            Champion& champ = engine.gamestate.shop[i];
+
+            std::string label;
+
+            if (champ.id == 0) {
+                label = "Empty##shop" + std::to_string(i);
+            } else {
+                label =
+                    champ.name +
+                    "\nCost: " + std::to_string(champ.cost) +
+                    "\nStar: " + std::to_string(champ.starLevel) +
+                    "##shop" + std::to_string(i);
+            }
+
+            if (ImGui::Button(label.c_str(), ImVec2(slotWidth, slotHeight))) {
+                engine.buy(i);
+            }
+
+            if (i < engine.gamestate.shop.size() - 1) {
+                ImGui::SameLine(0.0f, gap);
+            }
+        }
+        // shop end
 
         ImGui::End();
+        // main layout end
 
         ImGui::Render();
 

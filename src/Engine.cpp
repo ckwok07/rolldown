@@ -26,7 +26,7 @@ void Engine::shutdown() {
 // setup
 // init game state
 void Engine::initGameState() {
-    gamestate.gold = 50;
+    gamestate.gold = 500;
     gamestate.level = 8;
     gamestate.time = 30.0;
     gamestate.stage = 28;
