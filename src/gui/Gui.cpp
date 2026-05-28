@@ -141,7 +141,11 @@ void GUI::run() {
         float gap = 10.0f;
         float bottomPadding = 40.0f;
 
-        float totalShopWidth = 5.0f * slotWidth + 4.0f * gap;
+        float rerollWidth = 120.0f;
+        float rerollHeight = 120.0f;
+        float rerollGap = 20.0f;
+
+        float totalShopWidth = rerollWidth + rerollGap + 5.0f * slotWidth + 4.0f * gap;
 
         ImVec2 windowSize = ImGui::GetWindowSize();
 
@@ -149,6 +153,14 @@ void GUI::run() {
         float shopY = windowSize.y - slotHeight - bottomPadding;
 
         ImGui::SetCursorPos(ImVec2(shopX, shopY));
+
+        ImGui::SetCursorPos(ImVec2(shopX, shopY));
+
+        if (ImGui::Button("Reroll", ImVec2(rerollWidth, rerollHeight))) {
+            engine.roll();
+        }
+
+        ImGui::SameLine(0.0f, rerollGap);
 
         for (int i = 0; i < engine.gamestate.shop.size(); i++) {
             Champion& champ = engine.gamestate.shop[i];

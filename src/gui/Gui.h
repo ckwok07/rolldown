@@ -17,5 +17,5 @@ private:
     Engine engine;
 
     int width = 1920;
-    int height = 1080;
+    int height = 1040;
 };
