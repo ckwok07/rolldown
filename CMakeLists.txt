@@ -17,7 +17,6 @@ add_executable(rolldown
 
 target_include_directories(rolldown PRIVATE
     src
-    C:/Users/Uffuf/vcpkg/installed/x64-windows/include
 )
 
 target_link_libraries(rolldown PRIVATE

@@ -18,4 +18,16 @@ private:
 
     int width = 1920;
     int height = 1040;
+
+    bool draggingShop = false;
+    int draggedShopIndex = -1;
+    Champion draggedShopChamp = nullChamp;
+    float dragOffsetX = 0.0f;
+    float dragOffsetY = 0.0f;
+
+    bool draggingBench = false;
+    int draggedBenchIndex = -1;
+    Champion draggedBenchChamp = nullChamp;
+    float benchDragOffsetX = 0.0f;
+    float benchDragOffsetY = 0.0f;
 };
