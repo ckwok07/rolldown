@@ -140,7 +140,7 @@ void GUI::run() {
         );
 
         float shopBarWidth = 1230.0f;
-        float shopBarHeight = 210.0f;
+        float shopBarHeight = 170.0f;
         float bottomPadding = 40.0f;
 
         ImVec2 windowSize = ImGui::GetWindowSize();
@@ -160,11 +160,12 @@ void GUI::run() {
         );
 
         ImDrawList* drawList = ImGui::GetWindowDrawList();
-
+        
+        // bottom gui
         drawList->AddRectFilled(
             rectMin,
             rectMax,
-            ImGui::GetColorU32(ImGuiCol_FrameBg)
+            IM_COL32(0, 0, 0, 255)
         );
 
         drawList->AddRect(
@@ -178,11 +179,8 @@ void GUI::run() {
         float slotWidth = 180.0f;
         float slotHeight = 120.0f;
         float gap = 10.0f;
-        float bottomPadding = 40.0f;
 
         float totalShopWidth = 5.0f * slotWidth + 4.0f * gap;
-
-        ImVec2 windowSize = ImGui::GetWindowSize();
 
         float shopX = (windowSize.x - totalShopWidth) / 2.0f;
         float shopY = windowSize.y - slotHeight - bottomPadding;
@@ -191,7 +189,7 @@ void GUI::run() {
 
         ImGui::SetCursorPos(ImVec2(shopX, shopY));
 
-        ImDrawList* drawList = ImGui::GetWindowDrawList();
+        drawList = ImGui::GetWindowDrawList();
 
         int buyIndexToCommit = -1;
 
@@ -347,7 +345,7 @@ void GUI::run() {
 
         float benchSlotSize = 70.0f;
         float benchGap = 0.0f;
-        float benchAboveShopGap = 20.0f;
+        float benchAboveShopGap = 60.0f;
 
         float totalBenchWidth = 9.0f * benchSlotSize + 8.0f * benchGap;
 
