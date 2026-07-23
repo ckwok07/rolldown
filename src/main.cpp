@@ -406,16 +406,16 @@ void test_shop_star_uppable_buy_condition() {
 //     return 0;
 // }
 
-#include "gui/Gui.h"
+#include "gui/App.h"
 
 int main() {
-    GUI gui;
+    App app;
 
-    if (!gui.init()) {
+    if (!app.init()) {
         return -1;
     }
 
-    gui.run();
+    app.run();
 
     return 0;
 }
