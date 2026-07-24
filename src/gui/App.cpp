@@ -12,8 +12,8 @@ App::~App() {
 
 bool App::init() {
     SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_WINDOW_TOPMOST);
-    InitWindow(1600, 900, "Rolldown Simulator");
-    background = LoadTexture("assets/image.png");
+    InitWindow(1800, 1012, "Rolldown Simulator");
+    background = LoadTexture("assets/image2.png");
     camera.position = { 0.2f, 12.0f, 9.0f };
     camera.target   = { 0.2f, 0.0f, 0.0f };
     camera.up       = { 0.0f, 1.0f, 0.0f };
@@ -44,16 +44,76 @@ Vector3 App::BenchCenter(int i) {
     return { cx, 0.0f, cz };
 }
 
+Rectangle App::ShopBarRect() {
+    float H = (float)GetScreenHeight();
+    float W = (float)GetScreenWidth();
+
+    float barH   = H * 0.1565f;
+    float barW   = barH * 6.8f;
+    float bottom = 0;
+
+    return { (W - barW) / 2.0f + W * -0.042f, H - bottom - barH, barW, barH };
+}
+
+Rectangle App::ShopXpRect() {
+    Rectangle bar = ShopBarRect();
+    return {
+        bar.x + bar.width  * 0.009f,
+        bar.y + bar.height * 0.08f,
+        bar.width  * 0.155f,
+        bar.height * 0.39f
+    };
+}
+
+Rectangle App::ShopRerollRect() {
+    Rectangle bar = ShopBarRect();
+    return {
+        bar.x + bar.width  * 0.009f,
+        bar.y + bar.height * 0.52f,
+        bar.width  * 0.155f,
+        bar.height * 0.39f
+    };
+}
+
+Rectangle App::ShopSlotRect(int i) {
+    Rectangle bar = ShopBarRect();
+
+    float left  = bar.width * 0.18f;
+    float right = bar.width * 0.99f;
+    float gap   = bar.width * 0.007f;
+    float cardH = bar.height * 0.86f;
+
+    float stripW = right - left;
+    float cardW  = (stripW - 4.0f * gap) / 5.0f;
+
+    return {
+        bar.x + left + i * (cardW + gap),
+        bar.y + (bar.height - cardH) / 2.0f,
+        cardW,
+        cardH
+    };
+}
+
 void App::run() {
     while (!WindowShouldClose()) {
         // get mouse position
         int hoveredRow = -1;
         int hoveredCol = -1;
         int hoveredBench = -1;
+        int hoveredShop = -1;
+
+        bool hoverXp = CheckCollisionPointRec(GetMousePosition(), ShopXpRect());
+        bool hoverReroll = CheckCollisionPointRec(GetMousePosition(), ShopRerollRect());
 
         Ray ray = GetScreenToWorldRay(GetMousePosition(), camera);
+        for (int i = 0; i < 5; i++) {
+            if (CheckCollisionPointRec(GetMousePosition(), ShopSlotRect(i))) {
+                hoveredShop = i;
+                break;
+            }
+        }
 
-        if (ray.direction.y < 0.0f) {
+        if (!hoverXp && !hoverReroll && hoveredShop == -1 && ray.direction.y < 0.0f) {
             
             float t = -ray.position.y / ray.direction.y;
             float hx = ray.position.x + t * ray.direction.x;
@@ -139,7 +199,7 @@ void App::run() {
         float halfSquare = squareSide / 2.0f;
 
         float panelY = 0.0f;
-        float tilt = -1.0f * DEG2RAD;
+        float tilt = 1.0f * DEG2RAD;
 
         for (int i = 0; i < squareCount; i++) {
             Vector3 c = BenchCenter(i);
@@ -162,6 +222,15 @@ void App::run() {
         }
 
         EndMode3D();
+        DrawRectangleLinesEx(ShopBarRect(), 3.0f, SKYBLUE);
+        DrawRectangleLinesEx(ShopXpRect(), 3.0f, hoverXp ? YELLOW : SKYBLUE);
+        DrawRectangleLinesEx(ShopRerollRect(), 3.0f, hoverReroll ? YELLOW : SKYBLUE);
+
+        for (int i = 0; i < 5; i++) {
+            Rectangle rect = ShopSlotRect(i);
+            Color c = (i == hoveredShop) ? YELLOW : SKYBLUE;
+            DrawRectangleLinesEx(rect, 3.0f, c);
+        }
         EndDrawing();
 
     }

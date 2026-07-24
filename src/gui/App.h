@@ -19,7 +19,12 @@ public:
 
     Vector3 HexCenter(int row, int col);
     Vector3 BenchCenter(int i);
-    
+    Rectangle ShopSlotRect(int i);
+    Rectangle ShopBarRect();
+
+    Rectangle ShopXpRect();
+    Rectangle ShopRerollRect();
+
     bool init();
     void run();
     void shutdown();
