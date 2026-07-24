@@ -22,8 +22,72 @@ bool App::init() {
     return true;
 }
 
+Vector3 App::HexCenter(int row, int col) {
+    float w = sqrtf(3.0f) * r;
+    float cx = (col - 3) * w + (row % 2 == 0 ? -w / 4.0f : w / 4.0f);
+    float cz = (row - 1.5f) * 1.5f * r;
+    return { cx, 0.0f, cz };
+}
+
+Vector3 App::BenchCenter(int i) {
+    float w = sqrtf(3.0f) * r;
+    float squareGap = r * 0.40f;
+    float boardGap = r * 0.45f;
+    float halfSquare = squareSide / 2.0f;
+
+    float boardRightX = 3.0f * w + w / 4.0f + sqrtf(3.0f) * drawR / 2.0f;
+    float boardBottomZ = (3.0f - 1.5f) * 1.5f * r + drawR;
+    float cz = boardBottomZ + boardGap + halfSquare;
+
+    float cx = boardRightX - halfSquare - (9 - 1 - i) * (squareSide + squareGap);
+
+    return { cx, 0.0f, cz };
+}
+
 void App::run() {
     while (!WindowShouldClose()) {
+        // get mouse position
+        int hoveredRow = -1;
+        int hoveredCol = -1;
+        int hoveredBench = -1;
+
+        Ray ray = GetScreenToWorldRay(GetMousePosition(), camera);
+
+        if (ray.direction.y < 0.0f) {
+            
+            float t = -ray.position.y / ray.direction.y;
+            float hx = ray.position.x + t * ray.direction.x;
+            float hz = ray.position.z + t * ray.direction.z;
+
+            float best = r * r;
+
+            for (int row = 0; row < 4; row++) {
+                for (int col = 0; col < 7; col++) {
+                    Vector3 c = HexCenter(row, col);
+                    float dx = hx - c.x;
+                    float dz = hz - c.z;
+                    float d2 = dx * dx + dz * dz;
+
+                    if (d2 < best) {
+                        best = d2;
+                        hoveredRow = row;
+                        hoveredCol = col;
+                    }
+                }
+            }
+
+            float halfSq = squareSide / 2.0f;
+
+            for (int i = 0; i < 9; i++) {
+                Vector3 c = BenchCenter(i);
+                if (fabsf(hx - c.x) <= halfSq && fabsf(hz - c.z) <= halfSq) {
+                    hoveredBench = i;
+                    break;
+                }
+            }
+        }
+
+
         BeginDrawing();
         ClearBackground(GRAY);
 
@@ -38,16 +102,12 @@ void App::run() {
 
         BeginMode3D(camera);
         // DRAWING HEXAGONS
-        float r = 0.55f;              // spacing radius
-        float drawR = r * 0.90f;      // actual drawn radius; smaller = larger gaps
         float w = sqrtf(3.0f) * r;
 
         for (int row = 0; row < 4; row++) {
             for (int col = 0; col < 7; col++) {
-                float cx = (col - 3) * w
-                        + (row % 2 == 0 ? -w / 4.0f : w / 4.0f);
-
-                float cz = (row - 1.5f) * 1.5f * r;
+                Vector3 center = HexCenter(row, col);
+                Color hexColor = (row == hoveredRow && col == hoveredCol) ? YELLOW : SKYBLUE;
 
                 Vector3 pts[6];
 
@@ -55,9 +115,9 @@ void App::run() {
                     float a = (60.0f * i - 90.0f) * DEG2RAD;
 
                     pts[i] = {
-                        cx + drawR * cosf(a),
+                        center.x + drawR * cosf(a),
                         0.0f,
-                        cz + drawR * sinf(a)
+                        center.z + drawR * sinf(a)
                     };
                 }
 
@@ -68,7 +128,7 @@ void App::run() {
                         0.018f,
                         0.018f,
                         6,
-                        SKYBLUE
+                        hexColor
                     );
                 }
             }
@@ -76,65 +136,28 @@ void App::run() {
         
         // DRAWING BOARD SQUARES
         const int squareCount = 9;
-
-        float squareSide = r * 1.2f;
-        float squareGap = r * 0.40f;
-        float boardGap = r * 0.45f;
         float halfSquare = squareSide / 2.0f;
-
-        // Rightmost hex center is:
-        // col 6 -> (6 - 3) * w
-        // odd row -> +w / 4
-        float rightmostHexCenterX = 3.0f * w + w / 4.0f;
-
-        // Horizontal distance from hex center to its flat right side
-        float hexHalfWidth = sqrtf(3.0f) * drawR / 2.0f;
-
-        // Exact right edge of the board
-        float boardRightX = rightmostHexCenterX + hexHalfWidth;
-
-        // Bottom row center: row 3
-        float bottomHexCenterZ = (3.0f - 1.5f) * 1.5f * r;
-
-        // Bottom point of the bottom hexagons
-        float boardBottomZ = bottomHexCenterZ + drawR;
-
-        // Place the squares below the board
-        float squareCenterZ =
-            boardBottomZ
-            + boardGap
-            + halfSquare;
 
         float panelY = 0.0f;
         float tilt = -1.0f * DEG2RAD;
 
         for (int i = 0; i < squareCount; i++) {
-            float distanceFromRight =
-                (squareCount - 1 - i) * (squareSide + squareGap);
+            Vector3 c = BenchCenter(i);
 
-            float squareCenterX =
-                boardRightX - halfSquare - distanceFromRight;
+            Color benchColor = (i == hoveredBench) ? YELLOW : SKYBLUE;
 
-            // Tilted square dimensions
             float dz = halfSquare * cosf(tilt);
             float dy = halfSquare * sinf(tilt);
 
             Vector3 square[4] = {
-                { squareCenterX - halfSquare, panelY + dy, squareCenterZ - dz },
-                { squareCenterX + halfSquare, panelY + dy, squareCenterZ - dz },
-                { squareCenterX + halfSquare, panelY - dy, squareCenterZ + dz },
-                { squareCenterX - halfSquare, panelY - dy, squareCenterZ + dz }
+                { c.x - halfSquare, panelY + dy, c.z - dz },
+                { c.x + halfSquare, panelY + dy, c.z - dz },
+                { c.x + halfSquare, panelY - dy, c.z + dz },
+                { c.x - halfSquare, panelY - dy, c.z + dz }
             };
 
             for (int edge = 0; edge < 4; edge++) {
-                DrawCylinderEx(
-                    square[edge],
-                    square[(edge + 1) % 4],
-                    0.018f,
-                    0.018f,
-                    6,
-                    SKYBLUE
-                );
+                DrawCylinderEx(square[edge], square[(edge + 1) % 4], 0.018f, 0.018f, 6, benchColor);
             }
         }
 
