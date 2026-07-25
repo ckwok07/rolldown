@@ -121,6 +121,9 @@ void App::run() {
             drag.sourceZone = Zone::Shop;
             drag.sourceIndex = hoveredShop;
             drag.pressPos = GetMousePosition();
+
+            Rectangle card = ShopSlotRect(hoveredShop);
+            drag.grabOffset = { GetMousePosition().x - card.x, GetMousePosition().y - card.y };
         }
 
         if (drag.phase == DragPhase::Pending &&
@@ -260,6 +263,14 @@ void App::run() {
             Rectangle rect = ShopSlotRect(i);
             Color c = (i == hoveredShop) ? YELLOW : SKYBLUE;
             DrawRectangleLinesEx(rect, 3.0f, c);
+        }
+
+        if (drag.phase == DragPhase::Dragging && drag.sourceZone == Zone::Shop) {
+            Rectangle card = ShopSlotRect(drag.sourceIndex);
+            Vector2 m = GetMousePosition();
+            Rectangle ghost = { m.x - drag.grabOffset.x, m.y - drag.grabOffset.y, card.width, card.height };
+            DrawRectangleRec(ghost, Fade(SKYBLUE, 0.5f));
+            DrawRectangleLinesEx(ghost, 3.0f, YELLOW);
         }
 
         // debugger
