@@ -3,6 +3,7 @@
 #include "raylib.h"
 #include <cmath>
 #include "rlgl.h"
+#include "raymath.h"
 
 App::App() {}
 
@@ -11,6 +12,8 @@ App::~App() {
 }
 
 bool App::init() {
+    engine.initGameState();
+
     SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_WINDOW_TOPMOST);
     InitWindow(1800, 1012, "Rolldown Simulator");
     background = LoadTexture("assets/image2.png");
@@ -111,6 +114,33 @@ void App::run() {
                 hoveredShop = i;
                 break;
             }
+        }
+
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoveredShop != -1) {
+            drag.phase = DragPhase::Pending;
+            drag.sourceZone = Zone::Shop;
+            drag.sourceIndex = hoveredShop;
+            drag.pressPos = GetMousePosition();
+        }
+
+        if (drag.phase == DragPhase::Pending &&
+            Vector2Distance(drag.pressPos, GetMousePosition()) > 5.0f) {
+            drag.phase = DragPhase::Dragging;
+        }
+
+        if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && drag.sourceZone == Zone::Shop) {
+            if (drag.phase == DragPhase::Pending) {
+                engine.buy(drag.sourceIndex);
+            } else if (drag.phase == DragPhase::Dragging) {
+                float cardW = ShopSlotRect(drag.sourceIndex).width;
+                if (Vector2Distance(drag.pressPos, GetMousePosition()) >= 0.5f * cardW) {
+                    engine.buy(drag.sourceIndex);
+                }
+                // under half a card → cancel, do nothing
+            }
+            drag.phase = DragPhase::Idle;
+            drag.sourceZone = Zone::None;
+            drag.sourceIndex = -1;
         }
 
         if (!hoverXp && !hoverReroll && hoveredShop == -1 && ray.direction.y < 0.0f) {
@@ -230,6 +260,33 @@ void App::run() {
             Rectangle rect = ShopSlotRect(i);
             Color c = (i == hoveredShop) ? YELLOW : SKYBLUE;
             DrawRectangleLinesEx(rect, 3.0f, c);
+        }
+
+        // debugger
+        GameState& gs = engine.gamestate;
+        int y = 10;
+        auto line = [&](const char* s) { DrawText(s, 10, y, 18, WHITE); y += 20; };
+        line(TextFormat("gold:%d lvl:%d xp:%d stage:%d time:%.1f", gs.gold, gs.level, gs.xp, gs.stage, gs.time));
+        line(TextFormat("boardUnits:%d locked:%d", gs.boardUnitCount, gs.shoplocked));
+        line(TextFormat("hover row:%d col:%d bench:%d shop:%d", hoveredRow, hoveredCol, hoveredBench, hoveredShop));
+        line(TextFormat("drag state:%d src:%d", (int)drag.phase, drag.sourceIndex));
+
+        for (int i = 0; i < 5; i++) {
+            Champion& c = gs.shop[i];
+            line(c.id == 0 ? TextFormat("shop %d: -", i)
+                        : TextFormat("shop %d: %s $%d *%d", i, c.name.c_str(), c.cost, c.starLevel));
+        }
+
+        for (int i = 0; i < 9; i++) {
+            Champion& c = gs.bench[i];
+            if (c.id != 0) line(TextFormat("bench %d: %s $%d *%d", i, c.name.c_str(), c.cost, c.starLevel));
+        }
+
+        for (int rw = 0; rw < 4; rw++) {
+            for (int cl = 0; cl < 7; cl++) {
+                Champion& c = gs.board[rw][cl];
+                if (c.id != 0) line(TextFormat("board %d,%d: %s *%d", rw, cl, c.name.c_str(), c.starLevel));
+            }
         }
         EndDrawing();
 

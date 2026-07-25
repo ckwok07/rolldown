@@ -1,11 +1,26 @@
 #pragma once
 
 #include "raylib.h"
+#include "../Engine.h"
+
+
+enum class Zone { None, Shop, Bench, Board };
+enum class DragPhase { Idle, Pending, Dragging };
+
+struct DragState {
+    DragPhase phase = DragPhase::Idle;
+    Zone sourceZone = Zone::None;
+    int sourceIndex = -1;
+    Vector2 pressPos = { 0, 0 };
+    Vector2 grabOffset = { 0, 0 };
+};
+
 
 class App
 {
 private:
     Texture2D background;
+    Engine engine;
 
     Camera3D camera = { 0 };
 public:
@@ -24,6 +39,8 @@ public:
 
     Rectangle ShopXpRect();
     Rectangle ShopRerollRect();
+
+    DragState drag;
 
     bool init();
     void run();
