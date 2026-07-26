@@ -273,6 +273,16 @@ void App::run() {
             DrawRectangleLinesEx(ghost, 3.0f, YELLOW);
         }
 
+        // xp and reroll mechanics
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoverXp) {
+            engine.levelup();
+        }
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoverReroll) {
+            engine.roll();
+        }
+        if (IsKeyPressed(KEY_D)) engine.roll();
+        if (IsKeyPressed(KEY_F)) engine.levelup();
+
         // debugger
         GameState& gs = engine.gamestate;
         int y = 10;
