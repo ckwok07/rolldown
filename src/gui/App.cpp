@@ -15,7 +15,7 @@ bool App::init() {
     engine.initGameState();
 
     SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_WINDOW_TOPMOST);
-    InitWindow(1800, 1012, "Rolldown Simulator");
+    InitWindow(1280, 720, "Rolldown Simulator");
     background = LoadTexture("assets/image2.png");
     camera.position = { 0.2f, 12.0f, 9.0f };
     camera.target   = { 0.2f, 0.0f, 0.0f };
@@ -180,6 +180,35 @@ void App::run() {
             }
         }
 
+      if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && drag.sourceZone == Zone::Bench) {
+            // sell unit
+            if (CheckCollisionPointRec(GetMousePosition(), ShopBarRect())) {
+                engine.sellbench(drag.sourceIndex);
+            } else if (hoveredBench != -1) { // swap with bench
+                engine.benchtobench(drag.sourceIndex, hoveredBench);
+            } else if (false) { // swap with board
+                continue;
+            } else { // no move
+
+            }
+
+            drag.phase = DragPhase::Idle;
+            drag.sourceZone = Zone::None;
+            drag.sourceIndex = -1;
+        }
+
+        if (drag.phase != DragPhase::Idle && !IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            drag.phase = DragPhase::Idle;
+            drag.sourceZone = Zone::None;
+            drag.sourceIndex = -1;
+        }
+
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoveredBench != -1) {
+            drag.phase = DragPhase::Pending;
+            drag.sourceZone = Zone::Bench;
+            drag.sourceIndex = hoveredBench;
+            drag.pressPos = GetMousePosition();
+        }  
 
         BeginDrawing();
         ClearBackground(GRAY);
