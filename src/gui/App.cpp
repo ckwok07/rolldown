@@ -486,6 +486,38 @@ void App::run() {
         if (IsKeyPressed(KEY_D)) engine.roll();
         if (IsKeyPressed(KEY_F)) engine.levelup();
 
+        if (IsKeyPressed(KEY_E)) {
+            if (hoveredBench != -1 && engine.gamestate.bench[hoveredBench].id != 0) {
+                engine.sellbench(hoveredBench);
+            } else if (hoveredRow != -1 && hoveredCol != -1 && engine.gamestate.board[hoveredRow][hoveredCol].id != 0) {
+                engine.sellboard(std::make_pair(hoveredRow, hoveredCol));
+            }
+        }
+
+        if (IsKeyPressed(KEY_W) && hoveredBench != -1 && engine.gamestate.bench[hoveredBench].id != 0) {
+            bool moved = false;
+
+            for (int row = 0; row < 4 && !moved; row++) {
+                for (int col = 0; col < 7; col++) {
+                    if (engine.gamestate.board[3 - row][col].id == 0) {
+                        engine.benchtoboard(hoveredBench, std::make_pair(3 - row, col));
+                        moved = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        else if (IsKeyPressed(KEY_W) && hoveredRow != -1 && hoveredCol != -1 &&
+                engine.gamestate.board[hoveredRow][hoveredCol].id != 0) {
+            for (int i = 0; i < 9; i++) {
+                if (engine.gamestate.bench[i].id == 0) {
+                    engine.boardtobench(std::make_pair(hoveredRow, hoveredCol), i);
+                    break;
+                }
+            }
+        }
+
         // debugger
         GameState& gs = engine.gamestate;
         int y = 10;
