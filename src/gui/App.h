@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+#include <unordered_map>
 #include "raylib.h"
 #include "../Engine.h"
 
@@ -11,6 +13,7 @@ struct DragState {
     DragPhase phase = DragPhase::Idle;
     Zone sourceZone = Zone::None;
     int sourceIndex = -1;
+    pair<int,int> sourceBoard = make_pair(-1,-1);
     Vector2 pressPos = { 0, 0 };
     Vector2 grabOffset = { 0, 0 };
 };
@@ -23,6 +26,15 @@ private:
     Engine engine;
 
     Camera3D camera = { 0 };
+    std::unordered_map<std::string, Texture2D> splashTextures;
+
+    Texture2D* GetChampionSplash(const std::string& championName);
+
+    void DrawTextureCover(
+        Texture2D texture,
+        Rectangle destination,
+        Color tint = WHITE
+    );
 public:
     App(/* args */);
     ~App();

@@ -5,17 +5,30 @@
 #include "rlgl.h"
 #include "raymath.h"
 
+static Color CostTierColor(int cost) {
+    switch (cost) {
+        case 1: return Color{ 145, 145, 145, 255 }; // grey
+        case 2: return Color{  50, 205, 100, 255 }; // green
+        case 3: return Color{  65, 135, 255, 255 }; // blue
+        case 4: return Color{ 175,  75, 235, 255 }; // purple
+        case 5: return Color{ 245, 185,  45, 255 }; // gold
+        default: return DARKGRAY;
+    }
+}
+
 App::App() {}
 
 App::~App() {
     shutdown();
 }
 
+
 bool App::init() {
     engine.initGameState();
 
     SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_WINDOW_TOPMOST);
-    InitWindow(1280, 720, "Rolldown Simulator");
+    SetTraceLogLevel(LOG_ERROR);
+    InitWindow(1600, 900, "Rolldown Simulator");
     background = LoadTexture("assets/image2.png");
     camera.position = { 0.2f, 12.0f, 9.0f };
     camera.target   = { 0.2f, 0.0f, 0.0f };
@@ -23,6 +36,84 @@ bool App::init() {
     camera.fovy     = 35.0f;
     camera.projection = CAMERA_PERSPECTIVE;
     return true;
+}
+
+Texture2D* App::GetChampionSplash(const std::string& championName) {
+    if (championName.empty()) {
+        return nullptr;
+    }
+
+    auto existing = splashTextures.find(championName);
+
+    if (existing != splashTextures.end()) {
+        return existing->second.id != 0
+            ? &existing->second
+            : nullptr;
+    }
+
+    std::string assetName;
+
+    for (char ch : championName) {
+        if (ch != ' ' && ch != '\'') {
+            assetName += ch;
+        }
+    }
+
+    std::string path =
+        "assets/champs/TFT17_" + assetName + ".png";
+
+    if (!FileExists(path.c_str())) {
+        TraceLog(
+            LOG_WARNING,
+            "Missing champion splash: %s",
+            path.c_str()
+        );
+
+        splashTextures[championName] = Texture2D{};
+        return nullptr;
+    }
+
+    Texture2D texture = LoadTexture(path.c_str());
+
+    SetTextureFilter(
+        texture,
+        TEXTURE_FILTER_BILINEAR
+    );
+
+    splashTextures[championName] = texture;
+
+    return &splashTextures[championName];
+}
+
+void App::DrawTextureCover( Texture2D texture, Rectangle destination, Color tint) {
+    float textureAspect =
+        (float)texture.width / (float)texture.height;
+
+    float destinationAspect =
+        destination.width / destination.height;
+
+    Rectangle source = {
+        0.0f,
+        0.0f,
+        (float)texture.width,
+        (float)texture.height
+    };
+
+    if (textureAspect > destinationAspect) {
+        source.width =
+            (float)texture.height * destinationAspect;
+
+        source.x =
+            ((float)texture.width - source.width) / 2.0f;
+    } else {
+        source.height =
+            (float)texture.width / destinationAspect;
+
+        source.y =
+            ((float)texture.height - source.height) / 2.0f;
+    }
+
+    DrawTexturePro( texture, source, destination, { 0.0f, 0.0f }, 0.0f, tint);
 }
 
 Vector3 App::HexCenter(int row, int col) {
@@ -180,14 +271,15 @@ void App::run() {
             }
         }
 
-      if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && drag.sourceZone == Zone::Bench) {
+
+        if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && drag.sourceZone == Zone::Bench) {
             // sell unit
             if (CheckCollisionPointRec(GetMousePosition(), ShopBarRect())) {
                 engine.sellbench(drag.sourceIndex);
             } else if (hoveredBench != -1) { // swap with bench
                 engine.benchtobench(drag.sourceIndex, hoveredBench);
-            } else if (false) { // swap with board
-                continue;
+            } else if (hoveredRow != -1 && hoveredCol != -1) { // swap with board
+                engine.benchtoboard(drag.sourceIndex, make_pair(hoveredRow, hoveredCol));
             } else { // no move
 
             }
@@ -197,10 +289,22 @@ void App::run() {
             drag.sourceIndex = -1;
         }
 
-        if (drag.phase != DragPhase::Idle && !IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+        if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && drag.sourceZone == Zone::Board) {
+            // sell unit
+            if (CheckCollisionPointRec(GetMousePosition(), ShopBarRect())) {
+                engine.sellboard(drag.sourceBoard);
+            } else if (hoveredBench != -1) { // swap with bench
+                engine.boardtobench(drag.sourceBoard, hoveredBench);
+            } else if (hoveredRow != -1 && hoveredCol != -1) { // swap with board
+                engine.boardtoboard(drag.sourceBoard, make_pair(hoveredRow, hoveredCol));
+            } else { // no move
+                
+            }
+
             drag.phase = DragPhase::Idle;
             drag.sourceZone = Zone::None;
             drag.sourceIndex = -1;
+            drag.sourceBoard = make_pair(-1,-1);
         }
 
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoveredBench != -1) {
@@ -209,6 +313,19 @@ void App::run() {
             drag.sourceIndex = hoveredBench;
             drag.pressPos = GetMousePosition();
         }  
+
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoveredRow != -1 && hoveredCol != -1) {
+            drag.phase = DragPhase::Pending;
+            drag.sourceZone = Zone::Board;
+            drag.sourceBoard = make_pair(hoveredRow, hoveredCol);
+            drag.pressPos = GetMousePosition();
+        }
+
+        if (drag.phase != DragPhase::Idle && !IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            drag.phase = DragPhase::Idle;
+            drag.sourceZone = Zone::None;
+            drag.sourceIndex = -1;
+        }
 
         BeginDrawing();
         ClearBackground(GRAY);
@@ -290,15 +407,72 @@ void App::run() {
 
         for (int i = 0; i < 5; i++) {
             Rectangle rect = ShopSlotRect(i);
-            Color c = (i == hoveredShop) ? YELLOW : SKYBLUE;
-            DrawRectangleLinesEx(rect, 3.0f, c);
+            Champion& champion = engine.gamestate.shop[i];
+            Color tierColor = CostTierColor(champion.cost);
+            
+
+            float border = 3.0f;
+            float infoHeight = rect.height * 0.18f;
+
+            Rectangle innerRect = {
+                rect.x + border,
+                rect.y + border,
+                rect.width - border * 2.0f,
+                rect.height - border * 2.0f
+            };
+
+            // spash art rectangle
+            Rectangle artRect = {innerRect.x, innerRect.y, innerRect.width, innerRect.height - infoHeight};
+
+            // name rectangle
+            Rectangle infoRect = {innerRect.x, artRect.y + artRect.height, innerRect.width, infoHeight};
+
+            if (champion.id != 0) {
+                Texture2D* splash = GetChampionSplash(champion.name);
+
+                if (splash != nullptr) {
+                    DrawTextureCover(*splash, artRect, WHITE);
+                }
+
+                DrawRectangleRec(infoRect, Fade(tierColor, 0.85f));
+
+                int fontSize = (int)(infoRect.height * 0.60f);
+                int textY = (int)(infoRect.y + (infoRect.height - fontSize)/ 1.5);
+
+                // name
+                DrawText(champion.name.c_str(), (int)(infoRect.x + 6.0f), textY, fontSize, WHITE );
+
+                // Cost: bottom-right
+                const char* costText = TextFormat("%d", champion.cost);
+
+                int costWidth =MeasureText(costText, fontSize);
+
+                DrawText( costText,(int)(infoRect.x + infoRect.width - costWidth -6.0f), textY, fontSize, WHITE);
+            }
+
+            DrawRectangleLinesEx(
+                rect,
+                3.0f,
+                i == hoveredShop ? YELLOW : tierColor
+            );
         }
 
         if (drag.phase == DragPhase::Dragging && drag.sourceZone == Zone::Shop) {
             Rectangle card = ShopSlotRect(drag.sourceIndex);
             Vector2 m = GetMousePosition();
             Rectangle ghost = { m.x - drag.grabOffset.x, m.y - drag.grabOffset.y, card.width, card.height };
-            DrawRectangleRec(ghost, Fade(SKYBLUE, 0.5f));
+            Champion& champion =
+                engine.gamestate.shop[drag.sourceIndex];
+
+            Texture2D* splash =
+                GetChampionSplash(champion.name);
+
+            if (splash != nullptr) {
+                DrawTextureCover(*splash, ghost, Fade(WHITE, 0.75f));
+            } else {
+                DrawRectangleRec(ghost, Fade(SKYBLUE, 0.5f));
+            }
+
             DrawRectangleLinesEx(ghost, 3.0f, YELLOW);
         }
 
@@ -346,6 +520,22 @@ void App::run() {
 }
 
 void App::shutdown() {
-    CloseWindow();
-    return;
+    for (auto& entry : splashTextures) {
+        Texture2D& texture = entry.second;
+
+        if (texture.id != 0) {
+            UnloadTexture(texture);
+        }
+    }
+
+    splashTextures.clear();
+
+    if (background.id != 0) {
+        UnloadTexture(background);
+        background = Texture2D{};
+    }
+
+    if (IsWindowReady()) {
+        CloseWindow();
+    }
 }
