@@ -207,7 +207,7 @@ void App::run() {
             }
         }
 
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoveredShop != -1) {
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoveredShop != -1 && engine.gamestate.shop[hoveredShop] != nullChamp) {
             drag.phase = DragPhase::Pending;
             drag.sourceZone = Zone::Shop;
             drag.sourceIndex = hoveredShop;
@@ -217,8 +217,7 @@ void App::run() {
             drag.grabOffset = { GetMousePosition().x - card.x, GetMousePosition().y - card.y };
         }
 
-        if (drag.phase == DragPhase::Pending &&
-            Vector2Distance(drag.pressPos, GetMousePosition()) > 5.0f) {
+        if (drag.phase == DragPhase::Pending && Vector2Distance(drag.pressPos, GetMousePosition()) > 5.0f) {
             drag.phase = DragPhase::Dragging;
         }
 
@@ -414,12 +413,7 @@ void App::run() {
             float border = 3.0f;
             float infoHeight = rect.height * 0.18f;
 
-            Rectangle innerRect = {
-                rect.x + border,
-                rect.y + border,
-                rect.width - border * 2.0f,
-                rect.height - border * 2.0f
-            };
+            Rectangle innerRect = { rect.x + border, rect.y + border, rect.width - border * 2.0f, rect.height - border * 2.0f};
 
             // spash art rectangle
             Rectangle artRect = {innerRect.x, innerRect.y, innerRect.width, innerRect.height - infoHeight};
@@ -427,7 +421,7 @@ void App::run() {
             // name rectangle
             Rectangle infoRect = {innerRect.x, artRect.y + artRect.height, innerRect.width, infoHeight};
 
-            if (champion.id != 0) {
+            if (champion.id != 0 && !(drag.phase == DragPhase::Dragging && drag.sourceZone == Zone::Shop && drag.sourceIndex == i)) {
                 Texture2D* splash = GetChampionSplash(champion.name);
 
                 if (splash != nullptr) {
@@ -442,7 +436,7 @@ void App::run() {
                 // name
                 DrawText(champion.name.c_str(), (int)(infoRect.x + 6.0f), textY, fontSize, WHITE );
 
-                // Cost: bottom-right
+                // cost
                 const char* costText = TextFormat("%d", champion.cost);
 
                 int costWidth =MeasureText(costText, fontSize);
@@ -450,30 +444,52 @@ void App::run() {
                 DrawText( costText,(int)(infoRect.x + infoRect.width - costWidth -6.0f), textY, fontSize, WHITE);
             }
 
-            DrawRectangleLinesEx(
-                rect,
-                3.0f,
-                i == hoveredShop ? YELLOW : tierColor
-            );
+            if (champion.id != 0 && !(drag.phase == DragPhase::Dragging && drag.sourceZone == Zone::Shop && drag.sourceIndex == i)) {
+                if (i == hoveredShop) {
+                    DrawRectangleRec(rect, Fade(WHITE, 0.25f));
+                }
+
+                DrawRectangleLinesEx(rect, 3.0f, tierColor);
+                            }
         }
 
         if (drag.phase == DragPhase::Dragging && drag.sourceZone == Zone::Shop) {
             Rectangle card = ShopSlotRect(drag.sourceIndex);
             Vector2 m = GetMousePosition();
             Rectangle ghost = { m.x - drag.grabOffset.x, m.y - drag.grabOffset.y, card.width, card.height };
-            Champion& champion =
-                engine.gamestate.shop[drag.sourceIndex];
+            Champion& champion = engine.gamestate.shop[drag.sourceIndex];
 
-            Texture2D* splash =
-                GetChampionSplash(champion.name);
+
+            float border = 3.0f;
+            float infoHeight = ghost.height * 0.18f;
+            Texture2D* splash = GetChampionSplash(champion.name);
+            Rectangle innerRect = { ghost.x + border, ghost.y + border, ghost.width - border * 2.0f, ghost.height - border * 2.0f};
+            Rectangle artRect = {innerRect.x, innerRect.y, innerRect.width, innerRect.height - infoHeight};
+            Rectangle infoRect = {innerRect.x, artRect.y + artRect.height, innerRect.width, infoHeight};
 
             if (splash != nullptr) {
-                DrawTextureCover(*splash, ghost, Fade(WHITE, 0.75f));
+                DrawTextureCover(*splash, artRect, Fade(WHITE, 0.75f));
             } else {
-                DrawRectangleRec(ghost, Fade(SKYBLUE, 0.5f));
+                DrawRectangleRec(artRect, Fade(SKYBLUE, 0.5f));
             }
 
-            DrawRectangleLinesEx(ghost, 3.0f, YELLOW);
+            Color tierColor = CostTierColor(champion.cost);
+            DrawRectangleRec(infoRect, Fade(tierColor, 0.85f));
+
+            int fontSize = (int)(infoRect.height * 0.60f);
+            int textY = (int)(infoRect.y + (infoRect.height - fontSize)/ 1.5);
+
+            // name
+            DrawText(champion.name.c_str(), (int)(infoRect.x + 6.0f), textY, fontSize, WHITE );
+
+            // cost
+            const char* costText = TextFormat("%d", champion.cost);
+
+            int costWidth =MeasureText(costText, fontSize);
+
+            DrawText( costText,(int)(infoRect.x + infoRect.width - costWidth -6.0f), textY, fontSize, WHITE);
+
+            DrawRectangleLinesEx(ghost, 3.0f, tierColor);
         }
 
         // xp and reroll mechanics

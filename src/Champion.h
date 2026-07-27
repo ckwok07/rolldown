@@ -16,4 +16,8 @@ struct Champion {
     bool operator==(const Champion& other) const {
         return id == other.id;
     }
+
+    bool operator!=(const Champion& other) const {
+        return !(*this == other);
+    }
 };
