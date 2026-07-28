@@ -30,11 +30,9 @@ private:
 
     Texture2D* GetChampionSplash(const std::string& championName);
 
-    void DrawTextureCover(
-        Texture2D texture,
-        Rectangle destination,
-        Color tint = WHITE
-    );
+    void DrawTextureCover(Texture2D texture, Rectangle destination, Color tint = WHITE);
+
+    void DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, int i,  bool highlighted);
 public:
     App(/* args */);
     ~App();
