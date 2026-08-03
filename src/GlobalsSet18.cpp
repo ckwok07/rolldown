@@ -150,16 +150,16 @@ const Champion Sivir = {52, "Sivir", 4, 1, {11, 34}, {}};
 const Champion Soraka = {53, "Soraka", 4, 1, {20, 32}, {}};
 const Champion Zyra = {0, "Zyra", 4, 1, {0,0}, {}};
 
-const Champion Bard = {54, "Bard", 5, 1, {12, 25}, {}};
-const Champion Blitz = {55, "Blitzcrank", 5, 1, {15, 19, 33}, {}};
-const Champion Fiora = {56, "Fiora", 5, 1, {7, 1, 28}, {}};
-const Champion Graves = {57, "Graves", 5, 1, {9}, {}};
-const Champion Jhin = {58, "Jhin", 5, 1, {6, 26, 32}, {}};
-const Champion Morgana = {59, "Morgana", 5, 1, {5}, {}};
-const Champion Shen = {60, "Shen", 5, 1, {3, 22}, {}};
-const Champion Sona = {61, "Sona", 5, 1, {4, 17, 31}, {}};
-const Champion Vex = {62, "Vex", 5, 1, {8}, {}};
-const Champion Zed = {63, "Zed", 5, 1, {10}, {}};
+const Champion Alune = {54, "Alune", 5, 1, {12, 25}, {}};
+const Champion Ashe = {55, "Ashe", 5, 1, {15, 19, 33}, {}};
+const Champion Draven = {56, "Draven", 5, 1, {7, 1, 28}, {}};
+const Champion ElderDragon = {57, "Elder Dragon", 5, 1, {9}, {}};
+const Champion Gnar = {58, "Gnar", 5, 1, {6, 26, 32}, {}};
+const Champion Ivern = {59, "Ivern", 5, 1, {5}, {}};
+const Champion Kennen = {60, "Kennen", 5, 1, {3, 22}, {}};
+const Champion Lux = {61, "Lux", 5, 1, {4, 17, 31}, {}};
+const Champion Maokai = {62, "Maokai", 5, 1, {8}, {}};
+const Champion Taric = {63, "Taric", 5, 1, {10}, {}};
 
 const vector<Champion> ALL_CHAMPIONS = {
     // 1-cost
