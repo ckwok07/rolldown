@@ -4,6 +4,7 @@
 #include <cmath>
 #include "rlgl.h"
 #include "raymath.h"
+#include "../SetId.h"
 
 static Color CostTierColor(int cost) {
     switch (cost) {
@@ -67,7 +68,7 @@ void App::DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, int 
 }
 
 bool App::init() {
-    engine.initGameState();
+    engine.initGameState(SetId::Set18);
 
     SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_WINDOW_TOPMOST);
     SetTraceLogLevel(LOG_ERROR);
@@ -102,8 +103,18 @@ Texture2D* App::GetChampionSplash(const std::string& championName) {
         }
     }
 
-    std::string path =
-        "assets/champs/TFT17_" + assetName + ".png";
+    std::string prefix;
+    std::string suffix; 
+
+    if (engine.gamestate.activeSet == SetId::Set17) {
+        prefix = "Set17";
+        suffix = "TFT17_";
+    } else {
+        prefix = "Set18";
+        suffix = "TFT18_";
+    }
+
+    std::string path = "assets/" + prefix + "/" + suffix + assetName + ".png";
 
     if (!FileExists(path.c_str())) {
         TraceLog(

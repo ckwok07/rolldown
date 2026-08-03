@@ -3,6 +3,7 @@
 #include <random>
 #include <map>
 #include "Champion.h"
+#include "SetId.h"
 
 Engine::Engine() {
     rng = mt19937(random_device{}());
@@ -13,10 +14,7 @@ Engine::~Engine() {
 }
 
 bool Engine::init() {
-    initGameState();
-    initChampPool();
-    initShop();
-
+    initGameState(SetId::Set18);
     return true;
 }
 
@@ -25,7 +23,18 @@ void Engine::shutdown() {
 
 // setup
 // init game state
-void Engine::initGameState() {
+void Engine::initGameState(SetId set) {
+    gamestate = GameState{};
+    
+    gamestate.activeSet = set;
+    if (set == SetId::Set17) {
+        gamestate.activeChampions = &Set17::ALL_CHAMPIONS;
+        gamestate.setState = Set17State{};
+    } else {
+        gamestate.activeChampions = &Set18::ALL_CHAMPIONS;
+        gamestate.setState = Set18State{};
+    }
+
     gamestate.gold = 500;
     gamestate.level = 8;
     gamestate.time = 30.0;
@@ -36,27 +45,22 @@ void Engine::initGameState() {
 
 // init pool
 void Engine::initChampPool() {
-    for (const Champion champ : ALL_CHAMPIONS) {
+    for (const Champion champ : *gamestate.activeChampions) {
         if (champ.cost == 1) gamestate.pool[champ.id] = 30;
         else if (champ.cost == 2) gamestate.pool[champ.id] = 25;
         else if (champ.cost == 3) gamestate.pool[champ.id] = 18;
         else if (champ.cost == 4) gamestate.pool[champ.id] = 10;
-        else if (champ.cost == 5) {
-            if (champ.name == "Zed" && !gamestate.zed) {
-                gamestate.pool[champ.id] = 0;
-            } else {
-                gamestate.pool[champ.id] = 9;
-            }
-        }
+        else if (champ.cost == 5) gamestate.pool[champ.id] = 9;
     }
 }
+
 // init shop
 void Engine::initShop() {
     vector<int> distribution = shopodds[gamestate.level - 2];
 
     auto hasChamps = [&](int c) {
         int total = 0;
-        for (const Champion& champ : ALL_CHAMPIONS) {
+        for (const Champion& champ : *gamestate.activeChampions) {
             if (champ.cost == c) total += gamestate.pool[champ.id];
         }
         return total > 0;
@@ -107,7 +111,7 @@ void Engine::initShop() {
 
 Champion Engine::getChamp(int cost) {
     int total = 0;
-    for (const Champion& champ : ALL_CHAMPIONS) {
+    for (const Champion& champ : *gamestate.activeChampions) {
         if (champ.cost == cost) {
             total += gamestate.pool[champ.id];
         }
@@ -119,7 +123,7 @@ Champion Engine::getChamp(int cost) {
     int roll = dist(rng);
 
     int cumulative = 0;
-    for (const Champion& champ : ALL_CHAMPIONS) {
+    for (const Champion& champ : *gamestate.activeChampions) {
         if (champ.cost == cost) {
             cumulative += gamestate.pool[champ.id];
             if (roll < cumulative) {
@@ -132,7 +136,7 @@ Champion Engine::getChamp(int cost) {
 }
 // reset
 void Engine::reset() {
-    initGameState();
+    initGameState(gamestate.activeSet);
 }
 
 // economy
@@ -157,7 +161,7 @@ void Engine::roll() {
 
     auto hasChamps = [&](int c) {
         int total = 0;
-        for (const Champion& champ : ALL_CHAMPIONS) {
+        for (const Champion& champ : *gamestate.activeChampions) {
             if (champ.cost == c) total += gamestate.pool[champ.id];
         }
         return total > 0;

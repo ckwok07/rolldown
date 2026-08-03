@@ -7,8 +7,25 @@
 using namespace std;
 #include "Globals.h"
 using Item = variant<int, pair<int,int>>;
+#include "SetId.h"
+
+struct Set17State {
+    bool zed = false;
+    // Miss Fortune mechanic
+};
+
+struct Set18State {
+    // Lux mechanic
+};
+
+using SetState = variant<Set17State, Set18State>;
 
 struct GameState {
+    // set
+    SetId activeSet = SetId::Set17;
+    const vector<Champion>* activeChampions = nullptr;
+    SetState setState = Set17State{};
+
     // gold shop, board, bench, augments, time, level, traits, items, 
 
     // basics
@@ -34,9 +51,6 @@ struct GameState {
 
     // miscellaneous
     // pris ticket
-    // zed augment
-    bool zed = false;
-    // miss fortune
 
     Champion tempSlot = nullChamp;
 

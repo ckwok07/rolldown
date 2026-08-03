@@ -3,6 +3,7 @@
 #include "Gamestate.h"
 #include "Champion.h"
 #include <random>
+#include "SetId.h"
 
 class Engine {
 public:
@@ -14,7 +15,7 @@ public:
 
     // setup
     // init game state
-    void initGameState();
+    void initGameState(SetId set);
     // init pool
     void initChampPool();
     // init shop

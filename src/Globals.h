@@ -14,6 +14,7 @@ extern const Champion nullChamp;
 
 extern const unordered_map<int, string> itemComponents;
 extern const map<pair<int,int>, string> completedItems;
+
 namespace Set17 {
   extern const Champion Aatrox;
   extern const Champion Briar;
