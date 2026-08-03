@@ -721,3 +721,15 @@ bool Engine::highlight(Champion champ) {
     }
     return false;
 }
+
+bool Engine::canEquipItems(Champion& champ, Item item) {
+    return false;
+}
+
+void Engine::checkTraits() {
+    return;
+}
+
+void Engine::combineItems(Champion& champ, Item item) {
+    return;
+}
