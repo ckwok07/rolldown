@@ -314,7 +314,8 @@ void App::run() {
                 }
             }
 
-            float halfSq = squareSide / 2.0f;
+            float hitboxPadding = 0.12f;
+            float halfSq = squareSide / 2.0f + hitboxPadding;
 
             for (int i = 0; i < 9; i++) {
                 Vector3 c = BenchCenter(i);
