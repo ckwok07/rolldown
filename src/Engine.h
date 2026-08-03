@@ -64,12 +64,13 @@ public:
     void updateGamestate();
 
     // can equip items
+    bool canEquipItems(Champion& champ, Item item);
 
     // automatic under update game state or some thing
-    // combine units
     // check traits
-    // check level
+    void checkTraits();
     // combine items
+    void combineItems(Champion& champ, Item item);
     GameState gamestate;
 
 
