@@ -196,40 +196,40 @@ namespace Set18 {
   
   extern const vector<Champion> ALL_CHAMPIONS;
   
-  // 1 Adaptor
-  // 2 Apex Predator
-  // 3 Attuned
-  // 4 Avatar
-  // 5 Blackthorn
-  // 6 Blossom
-  // 7 Bounty Seeker 
-  // 8 Brawler
-  // 9 Caustic 
-  // 10 Coven 
-  // 11 Defender 
+  // 1 Adaptor 2 > 3 > 4
+  // 2 Apex Predator 1 orange
+  // 3 Attuned 1 orange
+  // 4 Avatar 1 
+  // 5 Blackthorn 2 > 4 > 6
+  // 6 Blossom 3 > 5 > 7 > 9 > 11
+  // 7 Bounty Seeker 1
+  // 8 Brawler 2 > 4 > 6
+  // 9 Caustic 1 
+  // 10 Coven 3 > 4 > 5 > 7
+  // 11 Defender 2> 4> 6
   // 12 Eclipse
-  // 13 Elderwood 
-  // 14 Emerald Aspect
-  // 15 Executioner
-  // 16 Fae
-  // 17 Flora Fatalis
-  // 18 Greenfather
-  // 19 Hunter
-  // 20 Inferno 
-  // 21 Invoker 
-  // 22 Juggernaut 
-  // 23 Lunar
-  // 24 Monolith
-  // 25 Old Growth
-  // 26 Primal
-  // 27 Rapidfire 
-  // 28 Ravager
-  // 29 Riftbeast 
-  // 30 Rival
-  // 31 Solar 
-  // 32 Spellweaver 
-  // 33 Sprykin
-  // 34 Summoner 
-  // 35 Thornmaiden
-  // 36 Vanguard
+  // 13 Elderwood 3 > 5 > 7 > 9 > 11
+  // 14 Emerald Aspect 1
+  // 15 Executioner 2 > 3 > 4
+  // 16 Fae 2 > 4
+  // 17 Flora Fatalis 1 > 2
+  // 18 Greenfather 1
+  // 19 Hunter 2 > 3 > 4 > 5
+  // 20 Inferno 2 > 3 > 5 > 7
+  // 21 Invoker 2 > 3 > 4 >5
+  // 22 Juggernaut 2 > 4 > 6
+  // 23 Lunar 2 > 3 > 4 > 5
+  // 24 Monolith 1
+  // 25 Old Growth 1
+  // 26 Primal 2 > 4
+  // 27 Rapidfire 2 > 3 > 4 > 5
+  // 28 Ravager 2 > 4 > 6
+  // 29 Riftbeast 3 > 5 > 7 > 10
+  // 30 Rival 1 > 2
+  // 31 Solar 3
+  // 32 Spellweaver 2 > 4 > 6 
+  // 33 Sprykin 3 > 5 > 7
+  // 34 Summoner 2 > 3
+  // 35 Thornmaiden 1
+  // 36 Vanguard 2 > 4 > 6
 }
