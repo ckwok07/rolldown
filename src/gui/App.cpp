@@ -395,6 +395,39 @@ void App::run() {
 
         BeginMode3D(camera);
 
+        // {
+        //     static const char* path = "assets/Set18_Ahri.glb";
+        //     static Model testModel = LoadModel(path);
+        //     static int animationCount = 0;
+        //     static ModelAnimation* animations = LoadModelAnimations(path, &animationCount);
+        //     static BoundingBox bounds = GetModelBoundingBox(testModel);
+        //     static float scale = 1.2f / (bounds.max.y - bounds.min.y);
+        //     static float animationFrame = 0.0f;
+        //     static float animationDirection = 1.0f;
+
+        //     if (animations != nullptr && animationCount > 0 && animations[0].keyframeCount > 1) {
+        //         float endFrame = (float)animations[0].keyframeCount - 2.0f;
+        //         animationFrame += GetFrameTime() * 30.0f * animationDirection;
+
+        //         if (animationFrame >= endFrame) {
+        //             animationFrame = endFrame;
+        //             animationDirection = -1.0f;
+        //         } else if (animationFrame <= 0.0f) {
+        //             animationFrame = 0.0f;
+        //             animationDirection = 1.0f;
+        //         }
+
+        //         UpdateModelAnimation(testModel, animations[0], (int)animationFrame);
+        //     }
+
+        //     Vector3 position = HexCenter(2, 3);
+        //     position.y = -bounds.min.y * scale;
+
+        //     rlEnableBackfaceCulling();
+        //     rlSetCullFace(RL_CULL_FACE_FRONT);
+        //     DrawModelEx(testModel, position, {0.0f, 1.0f, 0.0f}, 0.0f, {scale, scale, scale}, WHITE);
+        //     rlSetCullFace(RL_CULL_FACE_BACK);
+        // }
         {
             static const char* path = "assets/Set18_Ahri.glb";
             static Model testModel = LoadModel(path);
@@ -407,7 +440,6 @@ void App::run() {
 
             if (animations != nullptr && animationCount > 0 && animations[0].keyframeCount > 1) {
                 float endFrame = (float)animations[0].keyframeCount - 2.0f;
-
                 animationFrame += GetFrameTime() * 30.0f * animationDirection;
 
                 if (animationFrame >= endFrame) {
@@ -421,13 +453,30 @@ void App::run() {
                 UpdateModelAnimation(testModel, animations[0], (int)animationFrame);
             }
 
-            Vector3 position = HexCenter(2, 3);
-            position.y = -bounds.min.y * scale;
-
             rlEnableBackfaceCulling();
             rlSetCullFace(RL_CULL_FACE_FRONT);
 
-            DrawModelEx(testModel, position, {0.0f, 1.0f, 0.0f}, 0.0f, {scale, scale, scale}, WHITE);
+            for (int row = 0; row < 4; row++) {
+                for (int col = 0; col < 7; col++) {
+                    Champion& champ = engine.gamestate.board[row][col];
+
+                    if (champ.id == Set18::Ahri.id) {
+                        Vector3 position = HexCenter(row, col);
+                        position.y = -bounds.min.y * scale;
+                        DrawModelEx(testModel, position, {0.0f, 1.0f, 0.0f}, 0.0f, {scale, scale, scale}, WHITE);
+                    }
+                }
+            }
+
+            for (int i = 0; i < 9; i++) {
+                Champion& champ = engine.gamestate.bench[i];
+
+                if (champ.id == Set18::Ahri.id) {
+                    Vector3 position = BenchCenter(i);
+                    position.y = -bounds.min.y * scale;
+                    DrawModelEx(testModel, position, {0.0f, 1.0f, 0.0f}, 0.0f, {scale, scale, scale}, WHITE);
+                }
+            }
 
             rlSetCullFace(RL_CULL_FACE_BACK);
         }
