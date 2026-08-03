@@ -91,20 +91,20 @@ const map<pair<int, int>, string> completedItems = {{{1, 1}, "Deathblade"},
 
                                                 {{10, 10}, "Blue Buff"}};
 
-const Champion Aatrox = {1, "Aatrox", 1, 1, {13, 22}, {}};
-const Champion Briar = {2, "Briar", 1, 1, {1, 16, 30}, {}};
-const Champion Caitlyn = {3, "Caitlyn", 1, 1, {13, 27}, {}};
-const Champion ChoGath = {4, "Cho'Gath", 1, 1, {6, 23}, {}};
-const Champion Ezreal = {5, "Ezreal", 1, 1, {21, 32}, {}};
-const Champion Leona = {6, "Leona", 1, 1, {2, 33}, {}};
-const Champion Lissandra = {7, "Lissandra", 1, 1, {6, 31, 29}, {}};
-const Champion Nasus = {8, "Nasus", 1, 1, {19, 33}, {}};
-const Champion Poppy = {9, "Poppy", 1, 1, {12, 22}, {}};
-const Champion RekSai = {10, "Rek'Sai", 1, 1, {16, 23}, {}};
-const Champion Talon = {11, "Talon", 1, 1, {20, 30}, {}};
-const Champion Teemo = {12, "Teemo", 1, 1, {19, 31}, {}};
-const Champion TF = {13, "Twisted Fate", 1, 1, {20, 27}, {}};
-const Champion Veigar = {14, "Veigar", 1, 1, {12, 29}, {}};
+const Champion Akali = {1, "Akali", 1, 1, {20, 1, 28}, {}};
+const Champion Camille = {2, "Camille", 1, 1, {10, 28}, {}};
+const Champion Cinderling = {3, "Cinderling", 1, 1, {29, 19}, {}};
+const Champion Karma = {4, "Karma", 1, 1, {6, 32}, {}};
+const Champion Kobuko = {5, "Kobuko", 1, 1, {33, 8}, {}};
+const Champion Leona = {6, "Leona", 1, 1, {31, 11}, {}};
+const Champion Ornn = {7, "Ornn", 1, 1, {13, 21}, {}};
+const Champion Pebbles = {8, "Pebbles", 1, 1, {19, 33}, {}};
+const Champion Rakan = {9, "Rakan", 1, 1, {16, 22, 36}, {}};
+const Champion RekSai = {10, "Rek'Sai", 1, 1, {5, 8}, {}};
+const Champion Varus = {11, "Varus", 1, 1, {20, 27}, {}};
+const Champion Veigar = {12, "Veigar", 1, 1, {5, 33, 32}, {}};
+const Champion Xayah = {13, "Xayah", 1, 1, {13, 16, 27}, {}};
+const Champion Yorick = {14, "Yorick", 1, 1, {6, 22, 34}, {}};
 
 const Champion Akali = {15, "Akali", 2, 1, {13, 28}, {}};
 const Champion Belveth = {16, "Bel'veth", 2, 1, {16, 24, 28}, {}};
