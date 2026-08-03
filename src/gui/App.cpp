@@ -71,8 +71,9 @@ bool App::init() {
     engine.initGameState(SetId::Set18);
 
     SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_WINDOW_TOPMOST);
-    SetTraceLogLevel(LOG_ERROR);
-    InitWindow(1600, 900, "Rolldown Simulator");
+    SetTraceLogLevel(LOG_WARNING);
+    InitWindow(1792, 1008, "Rolldown Simulator");
+
     background = LoadTexture("assets/image2.png");
     camera.position = { 0.2f, 12.0f, 9.0f };
     camera.target   = { 0.2f, 0.0f, 0.0f };
@@ -393,6 +394,44 @@ void App::run() {
         );
 
         BeginMode3D(camera);
+
+        {
+            static const char* path = "assets/Set18_Ahri.glb";
+            static Model testModel = LoadModel(path);
+            static int animationCount = 0;
+            static ModelAnimation* animations = LoadModelAnimations(path, &animationCount);
+            static BoundingBox bounds = GetModelBoundingBox(testModel);
+            static float scale = 1.2f / (bounds.max.y - bounds.min.y);
+            static float animationFrame = 0.0f;
+            static float animationDirection = 1.0f;
+
+            if (animations != nullptr && animationCount > 0 && animations[0].keyframeCount > 1) {
+                float endFrame = (float)animations[0].keyframeCount - 2.0f;
+
+                animationFrame += GetFrameTime() * 30.0f * animationDirection;
+
+                if (animationFrame >= endFrame) {
+                    animationFrame = endFrame;
+                    animationDirection = -1.0f;
+                } else if (animationFrame <= 0.0f) {
+                    animationFrame = 0.0f;
+                    animationDirection = 1.0f;
+                }
+
+                UpdateModelAnimation(testModel, animations[0], (int)animationFrame);
+            }
+
+            Vector3 position = HexCenter(2, 3);
+            position.y = -bounds.min.y * scale;
+
+            rlEnableBackfaceCulling();
+            rlSetCullFace(RL_CULL_FACE_FRONT);
+
+            DrawModelEx(testModel, position, {0.0f, 1.0f, 0.0f}, 0.0f, {scale, scale, scale}, WHITE);
+
+            rlSetCullFace(RL_CULL_FACE_BACK);
+        }
+
         // DRAWING HEXAGONS
         float w = sqrtf(3.0f) * r;
 
@@ -559,6 +598,11 @@ void App::shutdown() {
         }
     }
 
+    if (ahriModel.meshCount > 0) {
+        UnloadModel(ahriModel);
+        ahriModel = {};
+    }
+
     splashTextures.clear();
 
     if (background.id != 0) {
@@ -569,4 +613,6 @@ void App::shutdown() {
     if (IsWindowReady()) {
         CloseWindow();
     }
+
+    
 }

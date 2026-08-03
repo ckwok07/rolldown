@@ -41,6 +41,7 @@ public:
     float drawR = r * 0.90f; 
     float squareSide = r * 1.2f;
 
+    Model ahriModel = {};
 
     Vector3 HexCenter(int row, int col);
     Vector3 BenchCenter(int i);
