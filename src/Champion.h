@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <variant>
+#include "Trait.h"
 using namespace std;
 using Item = variant<int, pair<int,int>>;
 
@@ -10,7 +11,7 @@ struct Champion {
     string name;
     int cost;
     int starLevel;
-    vector<int> traits;
+    vector<trait> traits;
     vector<Item> items;
 
     bool operator==(const Champion& other) const {
