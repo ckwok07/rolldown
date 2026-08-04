@@ -4,7 +4,7 @@
 #include <variant>
 using namespace std;
 
-struct Champion {
+struct trait {
     int id;
     string name;
     vector<int> nums;
