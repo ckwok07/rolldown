@@ -5,7 +5,6 @@
 #include <map>
 #include <vector>
 #include <set>
-#include "Trait.h"
 using namespace std;
 
 extern const vector<vector<int>> shopodds;
@@ -198,44 +197,44 @@ namespace Set18 {
   
   extern const vector<Champion> ALL_CHAMPIONS;
 
-  extern const vector<trait> ALL_TRAITS;
+//   extern const vector<trait> ALL_TRAITS;
 
-  extern const trait Adaptor;
-  extern const trait ApexPredator;
-  extern const trait Attuned;
-  extern const trait Avatar;
-  extern const trait Blackthorn;
-  extern const trait Blossom;
-  extern const trait BountySeeker;
-  extern const trait Brawler;
-  extern const trait Caustic;
-  extern const trait Coven;
-  extern const trait Defender;
-  extern const trait Eclipse;
-  extern const trait Elderwood
-  extern const trait EmeraldAspect;
-  extern const trait Executioner;
-  extern const trait Fae;
-  extern const trait FloraFatalis
-  extern const trait Greenfather;
-  extern const trait Hunter;
-  extern const trait Inferno;
-  extern const trait Invoker;
-  extern const trait Juggernaut;
-  extern const trait Lunar;
-  extern const trait Monolith;
-  extern const trait OldGrowth;
-  extern const trait Primal;
-  extern const trait Rapidfire;
-  extern const trait Ravager;
-  extern const trait Riftbeast;
-  extern const trait Rival;
-  extern const trait Solar;
-  extern const trait Spellweaver;
-  extern const trait Sprykin;
-  extern const trait Summoner;
-  extern const trait Thornmaiden;
-  extern const trait Vanguard;
+//   extern const trait Adaptor;
+//   extern const trait ApexPredator;
+//   extern const trait Attuned;
+//   extern const trait Avatar;
+//   extern const trait Blackthorn;
+//   extern const trait Blossom;
+//   extern const trait BountySeeker;
+//   extern const trait Brawler;
+//   extern const trait Caustic;
+//   extern const trait Coven;
+//   extern const trait Defender;
+//   extern const trait Eclipse;
+//   extern const trait Elderwood;
+//   extern const trait EmeraldAspect;
+//   extern const trait Executioner;
+//   extern const trait Fae;
+//   extern const trait FloraFatalis;
+//   extern const trait Greenfather;
+//   extern const trait Hunter;
+//   extern const trait Inferno;
+//   extern const trait Invoker;
+//   extern const trait Juggernaut;
+//   extern const trait Lunar;
+//   extern const trait Monolith;
+//   extern const trait OldGrowth;
+//   extern const trait Primal;
+//   extern const trait Rapidfire;
+//   extern const trait Ravager;
+//   extern const trait Riftbeast;
+//   extern const trait Rival;
+//   extern const trait Solar;
+//   extern const trait Spellweaver;
+//   extern const trait Sprykin;
+//   extern const trait Summoner;
+//   extern const trait Thornmaiden;
+//   extern const trait Vanguard;
 
   // 1 Adaptor 2 > 3 > 4
   // 2 Apex Predator 1 orange

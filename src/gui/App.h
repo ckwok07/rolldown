@@ -33,6 +33,14 @@ private:
     void DrawTextureCover(Texture2D texture, Rectangle destination, Color tint = WHITE);
 
     void DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, int i,  bool highlighted);
+
+    std::unordered_map<int, Model> champModels;
+    std::unordered_map<int, ModelAnimation*> champAnims;
+    std::unordered_map<int, int> champAnimCounts;
+    std::unordered_map<int, float> champScales;
+    std::unordered_map<int, float> champYOffsets;
+    std::unordered_map<int, float> champAnimFrame;
+    std::unordered_map<int, float> champAnimDir;
 public:
     App(/* args */);
     ~App();

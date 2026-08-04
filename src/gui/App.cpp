@@ -80,6 +80,46 @@ bool App::init() {
     camera.up       = { 0.0f, 1.0f, 0.0f };
     camera.fovy     = 35.0f;
     camera.projection = CAMERA_PERSPECTIVE;
+
+    string prefix;
+    string suffix;
+
+    if (engine.gamestate.activeSet == SetId::Set17) {
+        prefix = "Set17";
+        suffix = "TFT17_";
+    } else {
+        prefix = "Set18";
+        suffix = "TFT18_";
+    }
+
+    const std::vector<Champion>& roster = (engine.gamestate.activeSet == SetId::Set17) ? Set17::ALL_CHAMPIONS : Set18::ALL_CHAMPIONS;
+
+    for (const Champion& champ : roster) {
+        std::string assetName;
+        for (char ch : champ.name) {
+            if (ch != ' ' && ch != '\'') assetName += ch;
+        }
+
+        std::string path = "assets/" + prefix + "/models/" + prefix + "_" + assetName + ".glb";
+
+        if (!FileExists(path.c_str())) continue;
+
+        Model model = LoadModel(path.c_str());
+        int count = 0;
+        ModelAnimation* anims = LoadModelAnimations(path.c_str(), &count);
+
+        BoundingBox bounds = GetModelBoundingBox(model);
+        float scale   = 1.2f / (bounds.max.y - bounds.min.y);
+        float yOffset = -bounds.min.y * scale;
+
+        champModels[champ.id]     = model;
+        champAnims[champ.id]      = anims;
+        champAnimCounts[champ.id] = count;
+        champScales[champ.id]     = scale;
+        champYOffsets[champ.id]   = yOffset;
+        champAnimFrame[champ.id]  = 0.0f;
+        champAnimDir[champ.id]    = 1.0f;
+    }
     return true;
 }
 
@@ -429,58 +469,113 @@ void App::run() {
         //     DrawModelEx(testModel, position, {0.0f, 1.0f, 0.0f}, 0.0f, {scale, scale, scale}, WHITE);
         //     rlSetCullFace(RL_CULL_FACE_BACK);
         // }
-        {
-            static const char* path = "assets/Set18_Ahri.glb";
-            static Model testModel = LoadModel(path);
-            static int animationCount = 0;
-            static ModelAnimation* animations = LoadModelAnimations(path, &animationCount);
-            static BoundingBox bounds = GetModelBoundingBox(testModel);
-            static float scale = 1.2f / (bounds.max.y - bounds.min.y);
-            static float animationFrame = 0.0f;
-            static float animationDirection = 1.0f;
+        // {
+        //     static const char* path = "assets/Set18_Ahri.glb";
+        //     static Model testModel = LoadModel(path);
+        //     static int animationCount = 0;
+        //     static ModelAnimation* animations = LoadModelAnimations(path, &animationCount);
+        //     static BoundingBox bounds = GetModelBoundingBox(testModel);
+        //     static float scale = 1.2f / (bounds.max.y - bounds.min.y);
+        //     static float animationFrame = 0.0f;
+        //     static float animationDirection = 1.0f;
 
-            if (animations != nullptr && animationCount > 0 && animations[0].keyframeCount > 1) {
-                float endFrame = (float)animations[0].keyframeCount - 2.0f;
-                animationFrame += GetFrameTime() * 30.0f * animationDirection;
+        //     if (animations != nullptr && animationCount > 0 && animations[0].keyframeCount > 1) {
+        //         float endFrame = (float)animations[0].keyframeCount - 2.0f;
+        //         animationFrame += GetFrameTime() * 30.0f * animationDirection;
 
-                if (animationFrame >= endFrame) {
-                    animationFrame = endFrame;
-                    animationDirection = -1.0f;
-                } else if (animationFrame <= 0.0f) {
-                    animationFrame = 0.0f;
-                    animationDirection = 1.0f;
+        //         if (animationFrame >= endFrame) {
+        //             animationFrame = endFrame;
+        //             animationDirection = -1.0f;
+        //         } else if (animationFrame <= 0.0f) {
+        //             animationFrame = 0.0f;
+        //             animationDirection = 1.0f;
+        //         }
+
+        //         UpdateModelAnimation(testModel, animations[0], (int)animationFrame);
+        //     }
+
+        //     rlEnableBackfaceCulling();
+        //     rlSetCullFace(RL_CULL_FACE_FRONT);
+
+        //     for (int row = 0; row < 4; row++) {
+        //         for (int col = 0; col < 7; col++) {
+        //             Champion& champ = engine.gamestate.board[row][col];
+
+        //             if (champ.id == Set18::Ahri.id) {
+        //                 Vector3 position = HexCenter(row, col);
+        //                 position.y = -bounds.min.y * scale;
+        //                 DrawModelEx(testModel, position, {0.0f, 1.0f, 0.0f}, 0.0f, {scale, scale, scale}, WHITE);
+        //             }
+        //         }
+        //     }
+
+        //     for (int i = 0; i < 9; i++) {
+        //         Champion& champ = engine.gamestate.bench[i];
+
+        //         if (champ.id == Set18::Ahri.id) {
+        //             Vector3 position = BenchCenter(i);
+        //             position.y = -bounds.min.y * scale;
+        //             DrawModelEx(testModel, position, {0.0f, 1.0f, 0.0f}, 0.0f, {scale, scale, scale}, WHITE);
+        //         }
+        //     }
+
+        //     rlSetCullFace(RL_CULL_FACE_BACK);
+        // }
+        rlDisableBackfaceCulling();
+
+        for (auto& entry : champModels) {
+            int id = entry.first;
+            Model& model = entry.second;
+            bool present = false;
+            for (int row = 0; row < 4 && !present; row++)
+                for (int col = 0; col < 7; col++)
+                    if (engine.gamestate.board[row][col].id == id) { present = true; break; }
+            for (int i = 0; i < 9 && !present; i++)
+                if (engine.gamestate.bench[i].id == id) { present = true; break; }
+
+            if (!present) continue;
+
+            ModelAnimation* anims = champAnims[id];
+            int count = champAnimCounts[id];
+
+            if (anims != nullptr && count > 0 && anims[0].keyframeCount > 1) {
+                float endFrame = (float)anims[0].keyframeCount - 2.0f;
+                champAnimFrame[id] += GetFrameTime() * 30.0f * champAnimDir[id];
+
+                if (champAnimFrame[id] >= endFrame) {
+                    champAnimFrame[id] = endFrame;
+                    champAnimDir[id] = -1.0f;
+                } else if (champAnimFrame[id] <= 0.0f) {
+                    champAnimFrame[id] = 0.0f;
+                    champAnimDir[id] = 1.0f;
                 }
 
-                UpdateModelAnimation(testModel, animations[0], (int)animationFrame);
+                UpdateModelAnimation(model, anims[0], (int)champAnimFrame[id]);
             }
 
-            rlEnableBackfaceCulling();
-            rlSetCullFace(RL_CULL_FACE_FRONT);
+            float scale = champScales[id];
+            float yOff  = champYOffsets[id];
 
             for (int row = 0; row < 4; row++) {
                 for (int col = 0; col < 7; col++) {
-                    Champion& champ = engine.gamestate.board[row][col];
-
-                    if (champ.id == Set18::Ahri.id) {
-                        Vector3 position = HexCenter(row, col);
-                        position.y = -bounds.min.y * scale;
-                        DrawModelEx(testModel, position, {0.0f, 1.0f, 0.0f}, 0.0f, {scale, scale, scale}, WHITE);
+                    if (engine.gamestate.board[row][col].id == id) {
+                        Vector3 pos = HexCenter(row, col);
+                        pos.y = yOff;
+                        DrawModelEx(model, pos, {0,1,0}, 0.0f, {scale,scale,scale}, WHITE);
                     }
                 }
             }
 
             for (int i = 0; i < 9; i++) {
-                Champion& champ = engine.gamestate.bench[i];
-
-                if (champ.id == Set18::Ahri.id) {
-                    Vector3 position = BenchCenter(i);
-                    position.y = -bounds.min.y * scale;
-                    DrawModelEx(testModel, position, {0.0f, 1.0f, 0.0f}, 0.0f, {scale, scale, scale}, WHITE);
+                if (engine.gamestate.bench[i].id == id) {
+                    Vector3 pos = BenchCenter(i);
+                    pos.y = yOff;
+                    DrawModelEx(model, pos, {0,1,0}, 0.0f, {scale,scale,scale}, WHITE);
                 }
             }
-
-            rlSetCullFace(RL_CULL_FACE_BACK);
         }
+
+        rlEnableBackfaceCulling();
 
         // DRAWING HEXAGONS
         float w = sqrtf(3.0f) * r;
@@ -648,10 +743,10 @@ void App::shutdown() {
         }
     }
 
-    if (ahriModel.meshCount > 0) {
-        UnloadModel(ahriModel);
-        ahriModel = {};
-    }
+    for (auto& e : champModels) UnloadModel(e.second);
+    for (auto& e : champAnims)  UnloadModelAnimations(e.second, champAnimCounts[e.first]);
+    champModels.clear();
+    champAnims.clear();
 
     splashTextures.clear();
 
