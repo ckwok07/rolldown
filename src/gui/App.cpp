@@ -92,6 +92,78 @@ bool App::init() {
         suffix = "TFT18_";
     }
 
+    const unordered_map<int, float> set18ScalePercent = {
+        {Set18::Akali.id, 85.0f},
+        {Set18::Camille.id, 100.0f},
+        {Set18::Cinderling.id, 40.0f},
+        {Set18::Karma.id, 100.0f},
+        {Set18::Kobuko.id, 75.0f},
+        {Set18::Leona.id, 100.0f},
+        {Set18::Ornn.id, 100.0f},
+        {Set18::Pebbles.id, 100.0f},
+        {Set18::Rakan.id, 100.0f},
+        {Set18::RekSai.id, 150.0f},
+        {Set18::Varus.id, 105.0f},
+        {Set18::Veigar.id, 80.0f},
+        {Set18::Xayah.id, 95.0f},
+        {Set18::Yorick.id, 110.0f},
+
+        {Set18::Alistar.id, 100.0f},
+        {Set18::Caitlyn.id, 85.0f},
+        {Set18::Elise.id, 230.0f},
+        {Set18::Gromp.id, 75.0f},
+        {Set18::Kayle.id, 120.0f},
+        {Set18::LeBlanc.id, 95.0f},
+        {Set18::Murkwolf.id, 40.0f},
+        {Set18::Scuttlecrab.id, 40.0f},
+        {Set18::Sejuani.id, 100.0f},
+        {Set18::Shen.id, 85.0f},
+        {Set18::Teemo.id, 55.0f},
+        {Set18::Warwick.id, 85.0f},
+        {Set18::Yunara.id, 90.0f},
+
+        {Set18::Azir.id, 180.0f},
+        {Set18::Cassiopeia.id, 85.0f},
+        {Set18::Diana.id, 95.0f},
+        {Set18::Fiddlesticks.id, 200.0f},
+        {Set18::Hecarim.id, 160.0f},
+        {Set18::KhaZix.id, 75.0f},
+        {Set18::KogMaw.id, 80.0f},
+        {Set18::Krug.id, 60.0f},
+        {Set18::MamaBeak.id, 60.0f},
+        {Set18::MasterYi.id, 90.0f},
+        {Set18::Rammus.id, 200.0f},
+        {Set18::Rengar.id, 97.0f},
+        {Set18::Tristana.id, 60.0f},
+        {Set18::Vi.id, 95.0f},
+
+        {Set18::Ahri.id, 100.0f},
+        {Set18::Amumu.id, 75.0f},
+        {Set18::Aphelios.id, 180.0f},
+        {Set18::Brambleback.id, 75.0f},
+        {Set18::Ezreal.id, 80.0f},
+        {Set18::Lillia.id, 100.0f},
+        {Set18::Malphite.id, 100.0f},
+        {Set18::Morgana.id, 90.0f},
+        {Set18::Nidalee.id, 95.0f},
+        {Set18::Sentinel.id, 75.0f},
+        {Set18::Sett.id, 100.0f},
+        {Set18::Sivir.id, 80.0f},
+        {Set18::Soraka.id, 240.0f},
+        {Set18::Zyra.id, 87.0f},
+
+        {Set18::Alune.id, 100.0f},
+        {Set18::Ashe.id, 102.0f},
+        {Set18::Draven.id, 85.0f},
+        {Set18::ElderDragon.id, 140.0f},
+        {Set18::Gnar.id, 70.0f},
+        {Set18::Ivern.id, 98.0f},
+        {Set18::Kennen.id, 70.0f},
+        {Set18::Lux.id, 80.0f},
+        {Set18::Maokai.id, 100.0f},
+        {Set18::Taric.id, 85.0f}
+    };
+
     const std::vector<Champion>& roster = (engine.gamestate.activeSet == SetId::Set17) ? Set17::ALL_CHAMPIONS : Set18::ALL_CHAMPIONS;
 
     for (const Champion& champ : roster) {
@@ -109,7 +181,17 @@ bool App::init() {
         ModelAnimation* anims = LoadModelAnimations(path.c_str(), &count);
 
         BoundingBox bounds = GetModelBoundingBox(model);
-        float scale   = 1.2f / (bounds.max.y - bounds.min.y);
+        float modelHeight = bounds.max.y - bounds.min.y;
+        float baseScale = 1.2f / modelHeight;
+
+        float scaleMultiplier = 1.0f;
+
+        auto scaleIt = set18ScalePercent.find(champ.id);
+        if (scaleIt != set18ScalePercent.end()) {
+            scaleMultiplier = scaleIt->second / 100.0f;
+        }
+
+        float scale = baseScale * scaleMultiplier * 0.95f;
         float yOffset = -bounds.min.y * scale;
 
         champModels[champ.id]     = model;
@@ -435,6 +517,53 @@ void App::run() {
         );
 
         BeginMode3D(camera);
+    //     {
+    //     std::vector<Champion> sorted = Set18::ALL_CHAMPIONS;
+    //     // std::sort(sorted.begin(), sorted.end(),
+    //     //    [](const Champion& a, const Champion& b) { return a.name < b.name; });
+
+    //     const int perRow = 12;
+    //     const float spacing = 1.0f;
+
+    //     rlDisableBackfaceCulling();
+
+    //     for (int i = 0; i < (int)sorted.size(); i++) {
+    //         const Champion& champ = sorted[i];
+
+    //         int col = i % perRow;
+    //         int row = i / perRow;
+    //         Vector3 pos = {
+    //             (col - perRow / 2) * spacing,
+    //             0.0f,
+    //             (row - 2) * spacing
+    //         };
+    //         DrawCylinder({ pos.x, 0.0f, pos.z }, 0.35f, 0.35f, 0.02f, 12, Fade(BLACK, 0.4f));
+
+    //         if (champModels.count(champ.id)) {
+    //             int id = champ.id;
+    //             Model& model = champModels[id];
+
+    //             ModelAnimation* anims = champAnims[id];
+    //             int count = champAnimCounts[id];
+    //             if (anims != nullptr && count > 0 && anims[0].keyframeCount > 1) {
+    //                 float endFrame = (float)anims[0].keyframeCount - 2.0f;
+    //                 champAnimFrame[id] += GetFrameTime() * 30.0f * champAnimDir[id];
+    //                 if (champAnimFrame[id] >= endFrame) { champAnimFrame[id] = endFrame; champAnimDir[id] = -1.0f; }
+    //                 else if (champAnimFrame[id] <= 0.0f) { champAnimFrame[id] = 0.0f; champAnimDir[id] = 1.0f; }
+    //                 UpdateModelAnimation(model, anims[0], (int)champAnimFrame[id]);
+    //             }
+
+    //             Vector3 drawPos = { pos.x, 0.0f, pos.z };
+    //             float scale = champScales[id];
+    //             DrawModelEx(model, drawPos, {0, 1, 0}, 0.0f, {scale, scale, scale}, WHITE);
+    //         } else {
+    //             DrawCube(pos, 0.4f, 0.4f, 0.4f, MAROON);
+    //             DrawCubeWires(pos, 0.4f, 0.4f, 0.4f, WHITE);
+    //         }
+    //     }
+
+    //     rlEnableBackfaceCulling();
+    // }
 
         // {
         //     static const char* path = "assets/Set18_Ahri.glb";

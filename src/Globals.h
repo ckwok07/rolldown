@@ -63,7 +63,7 @@ namespace Set17 {
   extern const Champion Corki;
   extern const Champion Karma;
   extern const Champion Kindred;
-  extern const Champion Leblanc;
+  extern const Champion LeBlanc;
   extern const Champion Yi;
   extern const Champion Nami;
   extern const Champion Nunu;
@@ -178,7 +178,7 @@ namespace Set18 {
   extern const Champion Malphite;
   extern const Champion Morgana;
   extern const Champion Nidalee;
-  extern const Champion Sentinal;
+  extern const Champion Sentinel;
   extern const Champion Sett;
   extern const Champion Sivir;
   extern const Champion Soraka;

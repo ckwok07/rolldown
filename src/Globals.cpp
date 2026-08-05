@@ -138,7 +138,7 @@ namespace Set17 {
     const Champion Corki = {42, "Corki", 4, 1, {12, 27}, {}};
     const Champion Karma = {43, "Karma", 4, 1, {6, 34}, {}};
     const Champion Kindred = {44, "Kindred", 4, 1, {13, 24}, {}};
-    const Champion Leblanc = {45, "LeBlanc", 4, 1, {2, 31}, {}};
+    const Champion LeBlanc = {45, "LeBlanc", 4, 1, {2, 31}, {}};
     const Champion Yi = {46, "Master Yi", 4, 1, {17, 28}, {}};
     const Champion Nami = {47, "Nami", 4, 1, {19, 29}, {}};
     const Champion Nunu = {48, "Nunu", 4, 1, {20, 33}, {}};
@@ -173,7 +173,7 @@ namespace Set17 {
         Ornn, Rhaast, Samira, Urgot, Viktor,
 
         // 4-cost
-        Asol, Corki, Karma, Kindred, Leblanc, Yi, Nami, Nunu,
+        Asol, Corki, Karma, Kindred, LeBlanc, Yi, Nami, Nunu,
         Rammus, Riven, TK, Mech, Xayah,
 
         // 5-cost
@@ -202,7 +202,7 @@ namespace Set18 {
     const Champion Elise = {17, "Elise", 2, 1, {12, 32}, {}};
     const Champion Gromp = {18, "Gromp", 2, 1, {17, 23}, {}};
     const Champion Kayle = {19, "Kayle", 2, 1, {19, 30}, {}};
-    const Champion Leblanc = {20, "Leblanc", 2, 1, {20, 22}, {}};
+    const Champion LeBlanc = {20, "LeBlanc", 2, 1, {20, 22}, {}};
     const Champion Murkwolf = {21, "Murkwolf", 2, 1, {1, 24}, {}};
     const Champion Scuttlecrab = {22, "Scuttlecrab", 2, 1, {12, 31, 34}, {}};
     const Champion Sejuani = {23, "Sejuani", 2, 1, {21, 27}, {}};
@@ -258,7 +258,7 @@ namespace Set18 {
         Pebbles, Rakan, RekSai, Varus, Veigar, Xayah, Yorick,
 
         // 2-cost
-        Alistar, Caitlyn, Elise, Gromp, Kayle, Leblanc, Murkwolf,
+        Alistar, Caitlyn, Elise, Gromp, Kayle, LeBlanc, Murkwolf,
         Scuttlecrab, Sejuani, Shen, Teemo, Warwick, Yunara,
 
         // 3-cost
