@@ -17,6 +17,16 @@ static Color CostTierColor(int cost) {
     }
 }
 
+static bool SameSlot(const SlotRef& a, const SlotRef& b) {
+    if (a.zone != b.zone) return false;
+
+    if (a.zone == Zone::Board) {
+        return a.row == b.row && a.col == b.col;
+    }
+
+    return a.index == b.index;
+}
+
 App::App() {}
 
 App::~App() {
@@ -24,6 +34,10 @@ App::~App() {
 }
 
 void App::DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, int i, bool highlighted) {
+    bool sourceHidden = drag.phase == DragPhase::Dragging &&
+                    drag.payload == DragPayload::Champion &&
+                    drag.source.zone == Zone::Shop &&
+                    drag.source.index == i;
     float border = 3.0f;
     float infoHeight = rect.height * 0.18f;
 
@@ -35,7 +49,7 @@ void App::DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, int 
     // name rectangle
     Rectangle infoRect = {innerRect.x, artRect.y + artRect.height, innerRect.width, infoHeight};
 
-    if (champion.id != 0 && !(drag.phase == DragPhase::Dragging && drag.sourceZone == Zone::Shop && drag.sourceIndex == i)) {
+    if (champion.id != 0 && !sourceHidden) {
         Texture2D* splash = GetChampionSplash(champion.name);
 
         if (splash != nullptr) {
@@ -58,7 +72,7 @@ void App::DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, int 
         DrawText( costText,(int)(infoRect.x + infoRect.width - costWidth -6.0f), textY, fontSize, WHITE);
     }
 
-    if (champion.id != 0 && !(drag.phase == DragPhase::Dragging && drag.sourceZone == Zone::Shop && drag.sourceIndex == i)) {
+    if (champion.id != 0 && !sourceHidden) {
         if (highlighted) {
             DrawRectangleRec(rect, Fade(WHITE, 0.25f));
         }
@@ -365,6 +379,211 @@ Rectangle App::ShopSlotRect(int i) {
     };
 }
 
+Rectangle App::ShopSellRect() {
+    Rectangle first = ShopSlotRect(0);
+    Rectangle last = ShopSlotRect(4);
+
+    return {
+        first.x,
+        first.y,
+        last.x + last.width - first.x,
+        first.height
+    };
+}
+
+void App::BeginDrag(DragPayload payload, const SlotRef& source, Vector2 grabOffset) {
+    drag.phase = DragPhase::Dragging;
+    drag.payload = payload;
+    drag.source = source;
+    drag.pressPos = GetMousePosition();
+    drag.grabOffset = grabOffset;
+
+    drag.holdTarget = SlotRef{};
+    drag.holdTime = 0.0f;
+    drag.holdReady = false;
+}
+
+void App::ResetDrag() {
+    drag = DragState{};
+}
+
+void App::HandleDragPress(int hoveredShop, int hoveredBench, int hoveredRow, int hoveredCol) {
+    if (!IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) return;
+    if (drag.phase != DragPhase::Idle) return;
+
+    Vector2 mouse = GetMousePosition();
+
+    if (hoveredShop != -1 && engine.gamestate.shop[hoveredShop] != nullChamp) {
+        Rectangle card = ShopSlotRect(hoveredShop);
+        Vector2 offset = {mouse.x - card.x, mouse.y - card.y};
+
+        BeginDrag(DragPayload::Champion, {Zone::Shop, hoveredShop, -1, -1}, offset);
+        return;
+    }
+
+    if (hoveredBench != -1 && engine.gamestate.bench[hoveredBench] != nullChamp) {
+        BeginDrag(DragPayload::Champion, {Zone::Bench, hoveredBench, -1, -1});
+        return;
+    }
+
+    if (hoveredRow != -1 && hoveredCol != -1 && engine.gamestate.board[hoveredRow][hoveredCol] != nullChamp) {
+        BeginDrag(DragPayload::Champion, {Zone::Board, -1, hoveredRow, hoveredCol});
+    }
+}
+
+SlotRef App::GetDropTarget(int hoveredBench, int hoveredRow, int hoveredCol) {
+    Vector2 mouse = GetMousePosition();
+
+    if (CheckCollisionPointRec(mouse, ShopSellRect())) {
+        return {Zone::SellArea, -1, -1, -1};
+    }
+
+    if (hoveredBench != -1) {
+        return {Zone::Bench, hoveredBench, -1, -1};
+    }
+
+    if (hoveredRow != -1 && hoveredCol != -1) {
+        return {Zone::Board, -1, hoveredRow, hoveredCol};
+    }
+
+    return {};
+}
+
+void App::HandleChampionDrop(const SlotRef& target) {
+    const SlotRef source = drag.source;
+    float dragDistance = Vector2Distance(drag.pressPos, GetMousePosition());
+
+    if (source.zone == Zone::Shop) {
+        float clickThreshold = 5.0f;
+        float buyDragDistance = ShopSlotRect(source.index).width * 0.5f;
+
+        if (dragDistance < clickThreshold || dragDistance >= buyDragDistance) {
+            engine.buy(source.index);
+        }
+
+        return;
+    }
+
+    if (SameSlot(source, target)) {
+        return;
+    }
+
+    if (source.zone == Zone::Bench) {
+        if (target.zone == Zone::SellArea) {
+            engine.sellbench(source.index);
+        } else if (target.zone == Zone::Bench) {
+            engine.benchtobench(source.index, target.index);
+        } else if (target.zone == Zone::Board) {
+            engine.benchtoboard(source.index, {target.row, target.col});
+        }
+
+        return;
+    }
+
+    if (source.zone == Zone::Board) {
+        std::pair<int, int> sourceCell = {source.row, source.col};
+
+        if (target.zone == Zone::SellArea) {
+            engine.sellboard(sourceCell);
+        } else if (target.zone == Zone::Bench) {
+            engine.boardtobench(sourceCell, target.index);
+        } else if (target.zone == Zone::Board) {
+            engine.boardtoboard(sourceCell, {target.row, target.col});
+        }
+    }
+}
+
+void App::HandleDragRelease(int hoveredBench, int hoveredRow, int hoveredCol) {
+    if (drag.phase == DragPhase::Idle) return;
+    if (!IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) return;
+
+    SlotRef target = GetDropTarget(hoveredBench, hoveredRow, hoveredCol);
+
+    if (drag.payload == DragPayload::Champion) {
+        HandleChampionDrop(target);
+    }
+
+    ResetDrag();
+}
+
+bool App::IsDraggedSource(const SlotRef& slot) const {
+    if (drag.phase != DragPhase::Dragging) return false;
+    return SameSlot(drag.source, slot);
+}
+
+const Champion* App::GetDraggedChampion() const {
+    if (drag.phase != DragPhase::Dragging) return nullptr;
+    if (drag.payload != DragPayload::Champion) return nullptr;
+
+    if (drag.source.zone == Zone::Shop) {
+        return &engine.gamestate.shop[drag.source.index];
+    }
+
+    if (drag.source.zone == Zone::Bench) {
+        return &engine.gamestate.bench[drag.source.index];
+    }
+
+    if (drag.source.zone == Zone::Board) {
+        return &engine.gamestate.board[drag.source.row][drag.source.col];
+    }
+
+    return nullptr;
+}
+
+bool App::GetMouseGroundPosition(Vector3& position) const {
+    Ray ray = GetScreenToWorldRay(GetMousePosition(), camera);
+
+    if (fabsf(ray.direction.y) < 0.0001f) {
+        return false;
+    }
+
+    float t = -ray.position.y / ray.direction.y;
+
+    if (t < 0.0f) {
+        return false;
+    }
+
+    position = {
+        ray.position.x + ray.direction.x * t,
+        0.0f,
+        ray.position.z + ray.direction.z * t
+    };
+
+    return true;
+}
+
+void App::DrawDraggedChampionModel() {
+    if (drag.phase != DragPhase::Dragging) return;
+    if (drag.payload != DragPayload::Champion) return;
+
+    if (drag.source.zone != Zone::Bench && drag.source.zone != Zone::Board) {
+        return;
+    }
+
+    const Champion* champion = GetDraggedChampion();
+
+    if (champion == nullptr || champion->id == 0) {
+        return;
+    }
+
+    auto modelIt = champModels.find(champion->id);
+
+    if (modelIt == champModels.end()) {
+        return;
+    }
+
+    Vector3 position;
+
+    if (!GetMouseGroundPosition(position)) {
+        return;
+    }
+
+    float scale = champScales[champion->id];
+    position.y = champYOffsets[champion->id];
+
+    DrawModelEx(modelIt->second, position, {0.0f, 1.0f, 0.0f}, 0.0f, {scale, scale, scale}, WHITE);
+}
+
 void App::run() {
     while (!WindowShouldClose()) {
         // get mouse position
@@ -382,35 +601,6 @@ void App::run() {
                 hoveredShop = i;
                 break;
             }
-        }
-
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoveredShop != -1 && engine.gamestate.shop[hoveredShop] != nullChamp) {
-            drag.phase = DragPhase::Pending;
-            drag.sourceZone = Zone::Shop;
-            drag.sourceIndex = hoveredShop;
-            drag.pressPos = GetMousePosition();
-
-            Rectangle card = ShopSlotRect(hoveredShop);
-            drag.grabOffset = { GetMousePosition().x - card.x, GetMousePosition().y - card.y };
-        }
-
-        if (drag.phase == DragPhase::Pending && Vector2Distance(drag.pressPos, GetMousePosition()) > 5.0f) {
-            drag.phase = DragPhase::Dragging;
-        }
-
-        if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && drag.sourceZone == Zone::Shop) {
-            if (drag.phase == DragPhase::Pending) {
-                engine.buy(drag.sourceIndex);
-            } else if (drag.phase == DragPhase::Dragging) {
-                float cardW = ShopSlotRect(drag.sourceIndex).width;
-                if (Vector2Distance(drag.pressPos, GetMousePosition()) >= 0.5f * cardW) {
-                    engine.buy(drag.sourceIndex);
-                }
-                // under half a card → cancel, do nothing
-            }
-            drag.phase = DragPhase::Idle;
-            drag.sourceZone = Zone::None;
-            drag.sourceIndex = -1;
         }
 
         if (!hoverXp && !hoverReroll && hoveredShop == -1 && ray.direction.y < 0.0f) {
@@ -447,63 +637,11 @@ void App::run() {
                 }
             }
         }
-
-
-        if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && drag.sourceZone == Zone::Bench) {
-            // sell unit
-            if (CheckCollisionPointRec(GetMousePosition(), ShopBarRect())) {
-                engine.sellbench(drag.sourceIndex);
-            } else if (hoveredBench != -1) { // swap with bench
-                engine.benchtobench(drag.sourceIndex, hoveredBench);
-            } else if (hoveredRow != -1 && hoveredCol != -1) { // swap with board
-                engine.benchtoboard(drag.sourceIndex, make_pair(hoveredRow, hoveredCol));
-            } else { // no move
-
-            }
-
-            drag.phase = DragPhase::Idle;
-            drag.sourceZone = Zone::None;
-            drag.sourceIndex = -1;
-        }
-
-        if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && drag.sourceZone == Zone::Board) {
-            // sell unit
-            if (CheckCollisionPointRec(GetMousePosition(), ShopBarRect())) {
-                engine.sellboard(drag.sourceBoard);
-            } else if (hoveredBench != -1) { // swap with bench
-                engine.boardtobench(drag.sourceBoard, hoveredBench);
-            } else if (hoveredRow != -1 && hoveredCol != -1) { // swap with board
-                engine.boardtoboard(drag.sourceBoard, make_pair(hoveredRow, hoveredCol));
-            } else { // no move
-                
-            }
-
-            drag.phase = DragPhase::Idle;
-            drag.sourceZone = Zone::None;
-            drag.sourceIndex = -1;
-            drag.sourceBoard = make_pair(-1,-1);
-        }
-
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoveredBench != -1) {
-            drag.phase = DragPhase::Pending;
-            drag.sourceZone = Zone::Bench;
-            drag.sourceIndex = hoveredBench;
-            drag.pressPos = GetMousePosition();
-        }  
-
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoveredRow != -1 && hoveredCol != -1) {
-            drag.phase = DragPhase::Pending;
-            drag.sourceZone = Zone::Board;
-            drag.sourceBoard = make_pair(hoveredRow, hoveredCol);
-            drag.pressPos = GetMousePosition();
-        }
-
-        if (drag.phase != DragPhase::Idle && !IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-            drag.phase = DragPhase::Idle;
-            drag.sourceZone = Zone::None;
-            drag.sourceIndex = -1;
-        }
-
+        
+        HandleDragPress(hoveredShop, hoveredBench, hoveredRow, hoveredCol);
+        HandleDragRelease(hoveredBench, hoveredRow, hoveredCol);
+        
+        
         BeginDrawing();
         ClearBackground(GRAY);
 
@@ -688,6 +826,11 @@ void App::run() {
             for (int row = 0; row < 4; row++) {
                 for (int col = 0; col < 7; col++) {
                     if (engine.gamestate.board[row][col].id == id) {
+                        SlotRef slot = {Zone::Board, -1, row, col};
+
+                        if (IsDraggedSource(slot)) {
+                            continue;
+                        }
                         Vector3 pos = HexCenter(row, col);
                         pos.y = yOff;
                         DrawModelEx(model, pos, {0,1,0}, 0.0f, {scale,scale,scale}, WHITE);
@@ -697,12 +840,19 @@ void App::run() {
 
             for (int i = 0; i < 9; i++) {
                 if (engine.gamestate.bench[i].id == id) {
+                    SlotRef slot = {Zone::Bench, i, -1, -1};
+
+                    if (IsDraggedSource(slot)) {
+                        continue;
+                    }
                     Vector3 pos = BenchCenter(i);
                     pos.y = yOff;
                     DrawModelEx(model, pos, {0,1,0}, 0.0f, {scale,scale,scale}, WHITE);
                 }
             }
         }
+
+        DrawDraggedChampionModel();
 
         rlEnableBackfaceCulling();
 
@@ -778,11 +928,12 @@ void App::run() {
             DrawShopIcon(rect, champion, tierColor,i, i == hoveredShop);
         }
 
-        if (drag.phase == DragPhase::Dragging && drag.sourceZone == Zone::Shop) {
-            Rectangle card = ShopSlotRect(drag.sourceIndex);
-            Vector2 m = GetMousePosition();
-            Rectangle ghost = { m.x - drag.grabOffset.x, m.y - drag.grabOffset.y, card.width, card.height};
-            Champion& champion = engine.gamestate.shop[drag.sourceIndex];
+        if (drag.phase == DragPhase::Dragging && drag.payload == DragPayload::Champion && drag.source.zone == Zone::Shop) {
+            Rectangle card = ShopSlotRect(drag.source.index);
+            Vector2 mouse = GetMousePosition();
+            Rectangle ghost = {mouse.x - drag.grabOffset.x, mouse.y - drag.grabOffset.y, card.width, card.height};
+
+            Champion& champion = engine.gamestate.shop[drag.source.index];
             Color tierColor = CostTierColor(champion.cost);
 
             DrawShopIcon(ghost, champion, tierColor, -1, true);
@@ -837,7 +988,7 @@ void App::run() {
         line(TextFormat("gold:%d lvl:%d xp:%d stage:%d time:%.1f", gs.gold, gs.level, gs.xp, gs.stage, gs.time));
         line(TextFormat("boardUnits:%d locked:%d", gs.boardUnitCount, gs.shoplocked));
         line(TextFormat("hover row:%d col:%d bench:%d shop:%d", hoveredRow, hoveredCol, hoveredBench, hoveredShop));
-        line(TextFormat("drag state:%d src:%d", (int)drag.phase, drag.sourceIndex));
+        line(TextFormat("drag state:%d zone:%d index:%d row:%d col:%d", (int)drag.phase, (int)drag.source.zone, drag.source.index, drag.source.row, drag.source.col));
 
         for (int i = 0; i < 5; i++) {
             Champion& c = gs.shop[i];

@@ -5,17 +5,50 @@
 #include "raylib.h"
 #include "../Engine.h"
 
+// describes where an object is located
+enum class Zone {
+    None, // no valid location
+    Shop,
+    Bench,
+    Board,
+    Inventory,
+    SellArea
+};
 
-enum class Zone { None, Shop, Bench, Board };
-enum class DragPhase { Idle, Pending, Dragging };
+// describes the object being dragged
+enum class DragPayload {
+    None,
+    Champion,
+    Item
+};
 
+// current state of mouse
+enum class DragPhase {
+    Idle,
+    Dragging
+};
+
+// generic reference to  any location that can involve dragging
+struct SlotRef {
+    Zone zone = Zone::None;
+    int index = -1;
+    int row = -1;
+    int col = -1;
+};
+
+// state of a current drag
 struct DragState {
     DragPhase phase = DragPhase::Idle;
-    Zone sourceZone = Zone::None;
-    int sourceIndex = -1;
-    pair<int,int> sourceBoard = make_pair(-1,-1);
-    Vector2 pressPos = { 0, 0 };
-    Vector2 grabOffset = { 0, 0 };
+    DragPayload payload = DragPayload::None;
+
+    SlotRef source;
+    SlotRef holdTarget;
+
+    Vector2 pressPos = {};
+    Vector2 grabOffset = {};
+
+    float holdTime = 0.0f;
+    bool holdReady = false;
 };
 
 
@@ -41,6 +74,25 @@ private:
     std::unordered_map<int, float> champYOffsets;
     std::unordered_map<int, float> champAnimFrame;
     std::unordered_map<int, float> champAnimDir;
+
+    // dragging stuff
+    DragState drag;
+
+    void BeginDrag(DragPayload payload, const SlotRef& source, Vector2 grabOffset = {});
+    void ResetDrag();
+
+    void HandleDragPress(int hoveredShop, int hoveredBench, int hoveredRow, int hoveredCol);
+    void HandleDragRelease(int hoveredBench, int hoveredRow, int hoveredCol);
+    void HandleChampionDrop(const SlotRef& target);
+
+    SlotRef GetDropTarget(int hoveredBench, int hoveredRow, int hoveredCol);
+    Rectangle ShopSellRect();
+
+    bool IsDraggedSource(const SlotRef& slot) const;
+    const Champion* GetDraggedChampion() const;
+
+    bool GetMouseGroundPosition(Vector3& position) const;
+    void DrawDraggedChampionModel();
 public:
     App(/* args */);
     ~App();
@@ -48,8 +100,6 @@ public:
     float r = 0.55f;
     float drawR = r * 0.90f; 
     float squareSide = r * 1.2f;
-
-    Model ahriModel = {};
 
     Vector3 HexCenter(int row, int col);
     Vector3 BenchCenter(int i);
@@ -59,7 +109,6 @@ public:
     Rectangle ShopXpRect();
     Rectangle ShopRerollRect();
 
-    DragState drag;
 
     bool init();
     void run();
