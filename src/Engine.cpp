@@ -355,7 +355,7 @@ void Engine::boardtoboard(pair<int,int> from, pair<int,int> to) {
     gamestate.board[from.first][from.second] = temp;
     updateGamestate();
 }
-
+// board to bench
 void Engine::boardtobench(pair<int,int> from, int to) {
     if (gamestate.board[from.first][from.second] == nullChamp) return;
     if (gamestate.bench[to] == nullChamp) gamestate.boardUnitCount--;
@@ -366,6 +366,15 @@ void Engine::boardtobench(pair<int,int> from, int to) {
     updateGamestate();
 }
 // swap units
+
+// bench unit
+void Engine::benchUnit(pair<int,int> from) {
+    return;
+}
+// field unit 
+void Engine::fieldUnit(int from) {
+    return;
+}
 
 
 // items

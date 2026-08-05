@@ -48,6 +48,11 @@ public:
     void boardtobench(pair<int,int> from, int to);
     // swap units
     void updateShopHighlights();
+    // bench unit
+    void benchUnit(pair<int,int> from);
+    // field unit
+    void fieldUnit(int from);
+
 
     // items
     // slam item
