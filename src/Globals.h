@@ -197,7 +197,7 @@ namespace Set18 {
   
   extern const vector<Champion> ALL_CHAMPIONS;
 
-//   extern const vector<trait> ALL_TRAITS;
+  extern const unordered_map<int, vector<int>> ALL_TRAITS;
 
 //   extern const trait Adaptor;
 //   extern const trait ApexPredator;
