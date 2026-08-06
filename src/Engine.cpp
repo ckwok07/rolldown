@@ -4,6 +4,7 @@
 #include <map>
 #include "Champion.h"
 #include "SetId.h"
+#include <unordered_set>
 
 Engine::Engine() {
     rng = mt19937(random_device{}());
@@ -535,16 +536,23 @@ void Engine::updateGamestate() {
         }
     }
 
-    unordered_map<int,int> activeTraits;
+    unordered_map<int, int> activeTraits;
+    unordered_set<int> countedChampions;
 
     for (int row = 0; row < 4; row++) {
         for (int col = 0; col < 7; col++) {
-            if (gamestate.board[row][col] == nullChamp) continue;
-            
-            for (auto trait : gamestate.board[row][col].traits) {
+            const Champion& champion = gamestate.board[row][col];
+
+            if (champion == nullChamp) continue;
+
+            // Duplicate copies of the same champion do not add traits again.
+            if (countedChampions.count(champion.id)) continue;
+
+            countedChampions.insert(champion.id);
+
+            for (int trait : champion.traits) {
                 activeTraits[trait]++;
             }
-
         }
     }
 
