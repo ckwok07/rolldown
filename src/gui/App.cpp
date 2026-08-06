@@ -88,7 +88,7 @@ bool App::init() {
     SetTraceLogLevel(LOG_WARNING);
     InitWindow(1792, 1008, "Rolldown Simulator");
 
-    background = LoadTexture("assets/image2.png");
+    // background = LoadTexture("assets/image2.png");
     camera.position = { 0.2f, 12.0f, 9.0f };
     camera.target   = { 0.2f, 0.0f, 0.0f };
     camera.up       = { 0.0f, 1.0f, 0.0f };
@@ -338,6 +338,120 @@ Rectangle App::ShopBarRect() {
     float bottom = 0;
 
     return { (W - barW) / 2.0f + W * -0.042f, H - bottom - barH, barW, barH };
+}
+
+Rectangle App::TraitBarRect() {
+    float H = (float)GetScreenHeight();
+    float W = (float)GetScreenWidth();
+
+    float barH   = H * 0.54;
+    float barW   = barH * 0.145;
+    float bottom = 0;
+
+    return { 0.0f, (H - barH) / 2.15f, barW, barH };
+}
+
+void App::DrawTraitHexs() {
+    const auto* traitTable = &Set18::ALL_TRAITS;
+    const auto* nameTable = &Set18::TRAIT_ID_TO_NAME;
+
+    if (engine.gamestate.activeSet == SetId::Set17) {
+        // traitTable = &Set17::ALL_TRAITS;
+        // nameTable = &Set17::TRAIT_ID_TO_NAME;
+    }
+
+    static int scrollOffset = 0;
+
+    Rectangle bar = TraitBarRect();
+    const float top = bar.y + bar.height * 0.085f;
+    const float slotH = bar.height * 0.086f;
+    const float cx = bar.width * 0.92f;
+    const int total = (int)engine.gamestate.activeTraits.size();
+
+    int index = 0;
+    int drawn = 0;
+
+    for (const auto& [traitId, traitCount] : engine.gamestate.activeTraits) {
+        if (index < scrollOffset) {
+            index++;
+            continue;
+        }
+
+        if (drawn >= 9) break;
+
+        const float cy = top + drawn * slotH + slotH / 2.0f;
+
+        std::string thresholds;
+
+        auto tiersIt = traitTable->find(traitId);
+        if (tiersIt != traitTable->end()) {
+            for (size_t i = 0; i < tiersIt->second.size(); i++) {
+                if (i > 0) thresholds += " > ";
+                thresholds += std::to_string(tiersIt->second[i]);
+            }
+        }
+
+        auto nameIt = nameTable->find(traitId);
+        const std::string name = nameIt != nameTable->end() ? nameIt->second : "";
+
+        const float rowH = slotH * 0.75f;
+        const float pad = rowH * 0.2f;
+        const float hexRadius = bar.width * 0.23f;
+        const float numberH = rowH * 0.62f;
+        const float numberW = numberH * 0.9f;
+        const float numberX = cx + hexRadius + rowH * 0.16f;
+        const float textX = numberX + numberW + pad;
+
+        const int textW = MeasureText(name.c_str(), 14) > MeasureText(thresholds.c_str(), 12)
+            ? MeasureText(name.c_str(), 14)
+            : MeasureText(thresholds.c_str(), 12);
+
+        DrawRectangle((int)cx, (int)(cy - rowH / 2.0f), (int)((textX - cx) + textW + pad), (int)rowH, Fade(DARKGRAY, 0.6f));
+        DrawRectangle((int)numberX, (int)(cy - numberH / 2.0f), (int)numberW, (int)numberH, Fade(WHITE, 0.5f));
+
+        const char* numberText = TextFormat("%d", traitCount);
+        Vector2 numberSize = MeasureTextEx(GetFontDefault(), numberText, 14.0f, 1.0f);
+
+        DrawText(numberText, (int)(numberX + numberW / 2.0f - numberSize.x / 2.0f), (int)(cy - numberSize.y / 2.0f), 14, WHITE);
+
+        Vector2 nameSize = MeasureTextEx(GetFontDefault(), name.c_str(), 13.0f, 1.0f);
+        Vector2 thresholdSize = MeasureTextEx(GetFontDefault(), thresholds.c_str(), 11.0f, 1.0f);
+
+        const float thresholdY = cy + rowH / 2.0f - rowH * 0.12f - thresholdSize.y;
+        const float nameY = thresholdY - 1.0f - nameSize.y;
+
+        DrawText(name.c_str(), (int)textX, (int)nameY, 13, WHITE);
+        DrawText(thresholds.c_str(), (int)textX, (int)thresholdY, 11, GRAY);
+        DrawPoly({cx, cy}, 6, hexRadius, 30.0f, SKYBLUE);
+
+        drawn++;
+        index++;
+    }
+
+    const int remaining = total - scrollOffset - drawn;
+    const float size = bar.width * 0.23f;
+    const float overflowY = top + 9.0f * slotH + slotH / 2.0f;
+
+    if (remaining > 0) {
+        Vector2 points[5] = {
+            {cx - size, overflowY + size * 0.4f},
+            {cx, overflowY + size},
+            {cx + size, overflowY + size * 0.4f},
+            {cx + size, overflowY - size},
+            {cx - size, overflowY - size}
+        };
+
+        DrawTriangleFan(points, 5, SKYBLUE);
+    }
+
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        Rectangle overflowRect = {cx - size, overflowY - size, size * 2.0f, size * 2.0f};
+        bool clickedOverflow = remaining > 0 && CheckCollisionPointRec(GetMousePosition(), overflowRect);
+
+        scrollOffset = clickedOverflow
+            ? (scrollOffset + 9 >= total ? 0 : scrollOffset + 9)
+            : 0;
+    }
 }
 
 Rectangle App::ShopXpRect() {
@@ -938,6 +1052,11 @@ void App::run() {
 
             DrawShopIcon(ghost, champion, tierColor, -1, true);
         }
+        // trait bar
+        DrawRectangleLinesEx(TraitBarRect(), 2.0f, SKYBLUE);
+
+        Rectangle bar = TraitBarRect();
+        DrawTraitHexs();
 
         // xp and reroll mechanics
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoverXp) {

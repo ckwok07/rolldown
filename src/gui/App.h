@@ -105,6 +105,8 @@ public:
     Vector3 BenchCenter(int i);
     Rectangle ShopSlotRect(int i);
     Rectangle ShopBarRect();
+    Rectangle TraitBarRect();
+    void DrawTraitHexs();
 
     Rectangle ShopXpRect();
     Rectangle ShopRerollRect();
