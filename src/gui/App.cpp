@@ -6,17 +6,6 @@
 #include "raymath.h"
 #include "../SetId.h"
 
-static Color CostTierColor(int cost) {
-    switch (cost) {
-        case 1: return Color{ 145, 145, 145, 255 }; // grey
-        case 2: return Color{  50, 205, 100, 255 }; // green
-        case 3: return Color{  65, 135, 255, 255 }; // blue
-        case 4: return Color{ 175,  75, 235, 255 }; // purple
-        case 5: return Color{ 245, 185,  45, 255 }; // gold
-        default: return DARKGRAY;
-    }
-}
-
 static bool SameSlot(const SlotRef& a, const SlotRef& b) {
     if (a.zone != b.zone) return false;
 
@@ -31,54 +20,6 @@ App::App() {}
 
 App::~App() {
     shutdown();
-}
-
-void App::DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, int i, bool highlighted) {
-    bool sourceHidden = drag.GetState().phase == DragPhase::Dragging &&
-                    drag.GetState().payload == DragPayload::Champion &&
-                    drag.GetState().source.zone == Zone::Shop &&
-                    drag.GetState().source.index == i;
-    float border = 3.0f;
-    float infoHeight = rect.height * 0.18f;
-
-    Rectangle innerRect = { rect.x + border, rect.y + border, rect.width - border * 2.0f, rect.height - border * 2.0f};
-
-    // spash art rectangle
-    Rectangle artRect = {innerRect.x, innerRect.y, innerRect.width, innerRect.height - infoHeight};
-
-    // name rectangle
-    Rectangle infoRect = {innerRect.x, artRect.y + artRect.height, innerRect.width, infoHeight};
-
-    if (champion.id != 0 && !sourceHidden) {
-        Texture2D* splash = GetChampionSplash(champion.name);
-
-        if (splash != nullptr) {
-            DrawTextureCover(*splash, artRect, WHITE);
-        }
-
-        DrawRectangleRec(infoRect, Fade(tierColor, 0.85f));
-
-        int fontSize = (int)(infoRect.height * 0.60f);
-        int textY = (int)(infoRect.y + (infoRect.height - fontSize)/ 1.5);
-
-        // name
-        DrawText(champion.name.c_str(), (int)(infoRect.x + 6.0f), textY, fontSize, WHITE );
-
-        // cost
-        const char* costText = TextFormat("%d", champion.cost);
-
-        int costWidth =MeasureText(costText, fontSize);
-
-        DrawText( costText,(int)(infoRect.x + infoRect.width - costWidth -6.0f), textY, fontSize, WHITE);
-    }
-
-    if (champion.id != 0 && !sourceHidden) {
-        if (highlighted) {
-            DrawRectangleRec(rect, Fade(WHITE, 0.25f));
-        }
-
-        DrawRectangleLinesEx(rect, 3.0f, tierColor);
-    }
 }
 
 bool App::init() {
@@ -219,94 +160,6 @@ bool App::init() {
     return true;
 }
 
-Texture2D* App::GetChampionSplash(const std::string& championName) {
-    if (championName.empty()) {
-        return nullptr;
-    }
-
-    auto existing = splashTextures.find(championName);
-
-    if (existing != splashTextures.end()) {
-        return existing->second.id != 0
-            ? &existing->second
-            : nullptr;
-    }
-
-    std::string assetName;
-
-    for (char ch : championName) {
-        if (ch != ' ' && ch != '\'') {
-            assetName += ch;
-        }
-    }
-
-    std::string prefix;
-    std::string suffix; 
-
-    if (engine.gamestate.activeSet == SetId::Set17) {
-        prefix = "Set17";
-        suffix = "TFT17_";
-    } else {
-        prefix = "Set18";
-        suffix = "TFT18_";
-    }
-
-    std::string path = "assets/" + prefix + "/" + suffix + assetName + ".png";
-
-    if (!FileExists(path.c_str())) {
-        TraceLog(
-            LOG_WARNING,
-            "Missing champion splash: %s",
-            path.c_str()
-        );
-
-        splashTextures[championName] = Texture2D{};
-        return nullptr;
-    }
-
-    Texture2D texture = LoadTexture(path.c_str());
-
-    SetTextureFilter(
-        texture,
-        TEXTURE_FILTER_BILINEAR
-    );
-
-    splashTextures[championName] = texture;
-
-    return &splashTextures[championName];
-}
-
-void App::DrawTextureCover( Texture2D texture, Rectangle destination, Color tint) {
-    float textureAspect =
-        (float)texture.width / (float)texture.height;
-
-    float destinationAspect =
-        destination.width / destination.height;
-
-    Rectangle source = {
-        0.0f,
-        0.0f,
-        (float)texture.width,
-        (float)texture.height
-    };
-
-    if (textureAspect > destinationAspect) {
-        source.width =
-            (float)texture.height * destinationAspect;
-
-        source.x =
-            ((float)texture.width - source.width) / 2.0f;
-    } else {
-        source.height =
-            (float)texture.width / destinationAspect;
-
-        source.y =
-            ((float)texture.height - source.height) / 2.0f;
-    }
-
-    DrawTexturePro( texture, source, destination, { 0.0f, 0.0f }, 0.0f, tint);
-}
-
 Vector3 App::HexCenter(int row, int col) {
     float w = sqrtf(3.0f) * r;
     float cx = (col - 3) * w + (row % 2 == 0 ? -w / 4.0f : w / 4.0f);
@@ -329,16 +182,6 @@ Vector3 App::BenchCenter(int i) {
     return { cx, 0.0f, cz };
 }
 
-Rectangle App::ShopBarRect() {
-    float H = (float)GetScreenHeight();
-    float W = (float)GetScreenWidth();
-
-    float barH   = H * 0.1565f;
-    float barW   = barH * 6.8f;
-    float bottom = 0;
-
-    return { (W - barW) / 2.0f + W * -0.042f, H - bottom - barH, barW, barH };
-}
 
 Rectangle App::TraitBarRect() {
     float H = (float)GetScreenHeight();
@@ -454,77 +297,6 @@ void App::DrawTraitHexs() {
     }
 }
 
-void App::DrawShopTrapezoid() {
-    Rectangle shop = ShopBarRect();
-
-    float centerX = (shop.x + shop.width / 2.0f) * 1.0925f;
-    float height = shop.height * 0.25f;
-    float bottomWidth = shop.width * 0.14f;
-    float topWidth = bottomWidth * 0.60f;
-    float thickness = 3.0f;
-
-    Vector2 topLeft = {centerX - topWidth / 2.0f, shop.y - height};
-    Vector2 topRight = {centerX + topWidth / 2.0f, shop.y - height};
-    Vector2 bottomRight = {centerX + bottomWidth / 2.0f, shop.y};
-    Vector2 bottomLeft = {centerX - bottomWidth / 2.0f, shop.y};
-
-    DrawLineEx(topLeft, topRight, thickness, SKYBLUE);
-    DrawLineEx(topRight, bottomRight, thickness, SKYBLUE);
-    DrawLineEx(bottomRight, bottomLeft, thickness, SKYBLUE);
-    DrawLineEx(bottomLeft, topLeft, thickness, SKYBLUE);
-}
-
-Rectangle App::ShopXpRect() {
-    Rectangle bar = ShopBarRect();
-    return {
-        bar.x + bar.width  * 0.009f,
-        bar.y + bar.height * 0.08f,
-        bar.width  * 0.155f,
-        bar.height * 0.39f
-    };
-}
-
-Rectangle App::ShopRerollRect() {
-    Rectangle bar = ShopBarRect();
-    return {
-        bar.x + bar.width  * 0.009f,
-        bar.y + bar.height * 0.52f,
-        bar.width  * 0.155f,
-        bar.height * 0.39f
-    };
-}
-
-Rectangle App::ShopSlotRect(int i) {
-    Rectangle bar = ShopBarRect();
-
-    float left  = bar.width * 0.18f;
-    float right = bar.width * 0.99f;
-    float gap   = bar.width * 0.007f;
-    float cardH = bar.height * 0.86f;
-
-    float stripW = right - left;
-    float cardW  = (stripW - 4.0f * gap) / 5.0f;
-
-    return {
-        bar.x + left + i * (cardW + gap),
-        bar.y + (bar.height - cardH) / 2.0f,
-        cardW,
-        cardH
-    };
-}
-
-Rectangle App::ShopSellRect() {
-    Rectangle first = ShopSlotRect(0);
-    Rectangle last = ShopSlotRect(4);
-
-    return {
-        first.x,
-        first.y,
-        last.x + last.width - first.x,
-        first.height
-    };
-}
-
 
 void App::HandleDragPress(int hoveredShop, int hoveredBench, int hoveredRow, int hoveredCol) {
     if (!IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) return;
@@ -533,7 +305,7 @@ void App::HandleDragPress(int hoveredShop, int hoveredBench, int hoveredRow, int
     Vector2 mouse = GetMousePosition();
 
     if (hoveredShop != -1 && engine.gamestate.shop[hoveredShop] != nullChamp) {
-        Rectangle card = ShopSlotRect(hoveredShop);
+        Rectangle card = shop.ShopSlotRect(hoveredShop);
         Vector2 offset = {mouse.x - card.x, mouse.y - card.y};
 
         drag.BeginDrag(DragPayload::Champion, {Zone::Shop, hoveredShop, -1, -1}, offset);
@@ -553,7 +325,7 @@ void App::HandleDragPress(int hoveredShop, int hoveredBench, int hoveredRow, int
 SlotRef App::GetDropTarget(int hoveredBench, int hoveredRow, int hoveredCol) {
     Vector2 mouse = GetMousePosition();
 
-    if (CheckCollisionPointRec(mouse, ShopSellRect())) {
+    if (CheckCollisionPointRec(mouse, shop.ShopSellRect())) {
         return {Zone::SellArea, -1, -1, -1};
     }
 
@@ -574,7 +346,7 @@ void App::HandleChampionDrop(const SlotRef& target) {
 
     if (source.zone == Zone::Shop) {
         float clickThreshold = 5.0f;
-        float buyDragDistance = ShopSlotRect(source.index).width * 0.5f;
+        float buyDragDistance = shop.ShopSlotRect(source.index).width * 0.5f;
 
         if (dragDistance < clickThreshold || dragDistance >= buyDragDistance) {
             engine.buy(source.index);
@@ -707,12 +479,12 @@ void App::run() {
         int hoveredBench = -1;
         int hoveredShop = -1;
 
-        bool hoverXp = CheckCollisionPointRec(GetMousePosition(), ShopXpRect());
-        bool hoverReroll = CheckCollisionPointRec(GetMousePosition(), ShopRerollRect());
+        bool hoverXp = CheckCollisionPointRec(GetMousePosition(), shop.ShopXpRect());
+        bool hoverReroll = CheckCollisionPointRec(GetMousePosition(), shop.ShopRerollRect());
 
         Ray ray = GetScreenToWorldRay(GetMousePosition(), camera);
         for (int i = 0; i < 5; i++) {
-            if (CheckCollisionPointRec(GetMousePosition(), ShopSlotRect(i))) {
+            if (CheckCollisionPointRec(GetMousePosition(), shop.ShopSlotRect(i))) {
                 hoveredShop = i;
                 break;
             }
@@ -1032,28 +804,9 @@ void App::run() {
         }
 
         EndMode3D();
-        DrawShopTrapezoid();
-        DrawRectangleLinesEx(ShopBarRect(), 3.0f, SKYBLUE);
-        DrawRectangleLinesEx(ShopXpRect(), 3.0f, hoverXp ? YELLOW : SKYBLUE);
-        DrawRectangleLinesEx(ShopRerollRect(), 3.0f, hoverReroll ? YELLOW : SKYBLUE);
+        // shop
+        shop.DrawShop(engine.gamestate.shop, hoveredShop, hoverXp, hoverReroll, drag.GetState());
 
-        for (int i = 0; i < 5; i++) {
-            Rectangle rect = ShopSlotRect(i);
-            Champion& champion = engine.gamestate.shop[i];
-            Color tierColor = CostTierColor(champion.cost);
-            DrawShopIcon(rect, champion, tierColor,i, i == hoveredShop);
-        }
-
-        if (drag.GetState().phase == DragPhase::Dragging && drag.GetState().payload == DragPayload::Champion && drag.GetState().source.zone == Zone::Shop) {
-            Rectangle card = ShopSlotRect(drag.GetState().source.index);
-            Vector2 mouse = GetMousePosition();
-            Rectangle ghost = {mouse.x - drag.GetState().grabOffset.x, mouse.y - drag.GetState().grabOffset.y, card.width, card.height};
-
-            Champion& champion = engine.gamestate.shop[drag.GetState().source.index];
-            Color tierColor = CostTierColor(champion.cost);
-
-            DrawShopIcon(ghost, champion, tierColor, -1, true);
-        }
         // trait bar
         DrawRectangleLinesEx(TraitBarRect(), 2.0f, SKYBLUE);
 
@@ -1136,20 +889,10 @@ void App::run() {
 }
 
 void App::shutdown() {
-    for (auto& entry : splashTextures) {
-        Texture2D& texture = entry.second;
-
-        if (texture.id != 0) {
-            UnloadTexture(texture);
-        }
-    }
-
     for (auto& e : champModels) UnloadModel(e.second);
     for (auto& e : champAnims)  UnloadModelAnimations(e.second, champAnimCounts[e.first]);
     champModels.clear();
     champAnims.clear();
-
-    splashTextures.clear();
 
     if (background.id != 0) {
         UnloadTexture(background);

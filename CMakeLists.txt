@@ -15,6 +15,7 @@ add_executable(rolldown
     src/Globals.cpp
     src/gui/App.cpp
     src/gui/Drag.cpp
+    src/gui/ShopUI.cpp
 )
 
 target_include_directories(rolldown PRIVATE

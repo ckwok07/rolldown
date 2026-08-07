@@ -5,6 +5,7 @@
 #include "raylib.h"
 #include "../Engine.h"
 #include "Drag.h"
+#include "ShopUI.h"
 
 class App
 {
@@ -13,13 +14,13 @@ private:
     Engine engine;
 
     Camera3D camera = { 0 };
-    std::unordered_map<std::string, Texture2D> splashTextures;
+    // std::unordered_map<std::string, Texture2D> splashTextures;
 
-    Texture2D* GetChampionSplash(const std::string& championName);
+    // Texture2D* GetChampionSplash(const std::string& championName);
 
-    void DrawTextureCover(Texture2D texture, Rectangle destination, Color tint = WHITE);
+    // void DrawTextureCover(Texture2D texture, Rectangle destination, Color tint = WHITE);
 
-    void DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, int i,  bool highlighted);
+    // void DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, int i,  bool highlighted);
 
     std::unordered_map<int, Model> champModels;
     std::unordered_map<int, ModelAnimation*> champAnims;
@@ -31,13 +32,14 @@ private:
 
     // dragging stuff
     Drag drag;
+    // shop
+    ShopUI shop;
 
     void HandleDragPress(int hoveredShop, int hoveredBench, int hoveredRow, int hoveredCol);
     void HandleDragRelease(int hoveredBench, int hoveredRow, int hoveredCol);
     void HandleChampionDrop(const SlotRef& target);
 
     SlotRef GetDropTarget(int hoveredBench, int hoveredRow, int hoveredCol);
-    Rectangle ShopSellRect();
 
     const Champion* GetDraggedChampion() const;
 
@@ -53,14 +55,14 @@ public:
 
     Vector3 HexCenter(int row, int col);
     Vector3 BenchCenter(int i);
-    Rectangle ShopSlotRect(int i);
-    void DrawShopTrapezoid();
-    Rectangle ShopBarRect();
+    // Rectangle ShopSlotRect(int i);
+    // void DrawShopTrapezoid();
+    // Rectangle ShopBarRect();
     Rectangle TraitBarRect();
     void DrawTraitHexs();
 
-    Rectangle ShopXpRect();
-    Rectangle ShopRerollRect();
+    // Rectangle ShopXpRect();
+    // Rectangle ShopRerollRect();
 
 
     bool init();
