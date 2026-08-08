@@ -15,6 +15,8 @@ extern const Champion nullChamp;
 extern const unordered_map<int, string> itemComponents;
 extern const map<pair<int,int>, string> completedItems;
 
+struct TraitEntry { int id, count, tier, rank; };
+
 namespace Set17 {
   extern const Champion Aatrox;
   extern const Champion Briar;
@@ -197,7 +199,7 @@ namespace Set18 {
   
   extern const vector<Champion> ALL_CHAMPIONS;
 
-  extern const unordered_map<int, vector<int>> ALL_TRAITS;
+  extern const unordered_map<int, pair<vector<int>, vector<int>>> ALL_TRAITS;
   extern const unordered_map<int, string> TRAIT_ID_TO_NAME;
 
 //   extern const trait Adaptor;

@@ -129,7 +129,26 @@ void ShopUI::DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, b
             DrawTextureCover(*splash, artRect, WHITE);
         }
 
-        DrawRectangleRec(infoRect, Fade(tierColor, 0.85f));
+        int traitFontSize = 10;
+        float traitSpacing = 25.0f;
+
+        float hexRadius = 7.60f;
+        float gap = 4.0f;
+
+        float traitY = artRect.y + artRect.height - champion.traits.size() * traitSpacing;
+
+        for (int j = 0; j < champion.traits.size(); j++) {
+            float y = traitY + j * traitSpacing;
+
+            Vector2 hexCenter = {artRect.x + gap + hexRadius, y + traitFontSize / 2.0f};
+            DrawPoly(hexCenter, 6, hexRadius, 30.0f, GRAY);
+
+            float traitX = hexCenter.x + hexRadius + gap;
+            string traitName = Set18::TRAIT_ID_TO_NAME.at(champion.traits[j]);
+            DrawText(traitName.c_str(), (int)traitX, (int)y * 1.003, traitFontSize, WHITE);
+        }
+
+        DrawRectangleRec(infoRect,tierColor);
 
         int fontSize = (int)(infoRect.height * 0.60f);
         int textY = (int)(infoRect.y + (infoRect.height - fontSize)/ 1.5);

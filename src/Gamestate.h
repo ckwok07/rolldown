@@ -39,7 +39,7 @@ struct GameState {
     vector<Champion> bench = vector<Champion>(9);
     vector<vector<Champion>> board = vector<vector<Champion>>(4, vector<Champion>(7));
     int boardUnitCount = 0;
-    unordered_map<int, int> activeTraits;
+    vector<TraitEntry> activeTraits;
     vector<Item> items;
 
     // shop

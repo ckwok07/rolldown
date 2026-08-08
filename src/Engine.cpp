@@ -536,27 +536,47 @@ void Engine::updateGamestate() {
         }
     }
 
-    unordered_map<int, int> activeTraits;
+    unordered_map<int, int> counts;
     unordered_set<int> countedChampions;
 
     for (int row = 0; row < 4; row++) {
         for (int col = 0; col < 7; col++) {
             const Champion& champion = gamestate.board[row][col];
-
             if (champion == nullChamp) continue;
-
-            // Duplicate copies of the same champion do not add traits again.
             if (countedChampions.count(champion.id)) continue;
-
             countedChampions.insert(champion.id);
-
             for (int trait : champion.traits) {
-                activeTraits[trait]++;
+                counts[trait]++;
             }
         }
     }
 
-    gamestate.activeTraits = activeTraits;
+    static constexpr int TIER_ORDER[] = {4, -1, 3, 2, 1, 0};  // top → bottom
+    auto rankOf = [](int tier) {
+        for (int i = 0; i < (int)std::size(TIER_ORDER); ++i)
+            if (TIER_ORDER[i] == tier) return i;
+        return (int)std::size(TIER_ORDER);
+    };
+
+    std::vector<TraitEntry> sorted;
+    sorted.reserve(counts.size());
+    for (const auto& [id, count] : counts) {
+        const auto& bp     = Set18::ALL_TRAITS.at(id).first;
+        const auto& labels = Set18::ALL_TRAITS.at(id).second;
+        int k = 0;
+        while (k < (int)bp.size() && bp[k] <= count) ++k;
+        int tier = (k == 0) ? 0 : labels[k - 1];
+        sorted.push_back({id, count, tier, rankOf(tier)});
+    }
+
+    std::sort(sorted.begin(), sorted.end(),
+        [](const TraitEntry& a, const TraitEntry& b) {
+            if (a.rank  != b.rank)  return a.rank  < b.rank;
+            if (a.count != b.count) return a.count > b.count;
+            return a.id < b.id;
+        });
+
+    gamestate.activeTraits = sorted;
 }
 
 void Engine::checkStarUp() {

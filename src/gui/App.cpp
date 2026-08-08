@@ -214,7 +214,9 @@ void App::DrawTraitHexs() {
     int index = 0;
     int drawn = 0;
 
-    for (const auto& [traitId, traitCount] : engine.gamestate.activeTraits) {
+    for (const auto& entry : engine.gamestate.activeTraits) {
+        const int traitId    = entry.id;
+        const int traitCount = entry.count;
         if (index < scrollOffset) {
             index++;
             continue;
@@ -228,9 +230,9 @@ void App::DrawTraitHexs() {
 
         auto tiersIt = traitTable->find(traitId);
         if (tiersIt != traitTable->end()) {
-            for (size_t i = 0; i < tiersIt->second.size(); i++) {
+            for (size_t i = 0; i < tiersIt->second.first.size(); i++) {
                 if (i > 0) thresholds += " > ";
-                thresholds += std::to_string(tiersIt->second[i]);
+                thresholds += std::to_string(tiersIt->second.first[i]);
             }
         }
 
@@ -864,23 +866,23 @@ void App::run() {
         line(TextFormat("hover row:%d col:%d bench:%d shop:%d", hoveredRow, hoveredCol, hoveredBench, hoveredShop));
         line(TextFormat("drag state:%d zone:%d index:%d row:%d col:%d", (int)drag.GetState().phase, (int)drag.GetState().source.zone, drag.GetState().source.index, drag.GetState().source.row, drag.GetState().source.col));
 
-        for (int i = 0; i < 5; i++) {
-            Champion& c = gs.shop[i];
-            line(c.id == 0 ? TextFormat("shop %d: -", i)
-                        : TextFormat("shop %d: %s $%d *%d", i, c.name.c_str(), c.cost, c.starLevel));
-        }
+        // for (int i = 0; i < 5; i++) {
+        //     Champion& c = gs.shop[i];
+        //     line(c.id == 0 ? TextFormat("shop %d: -", i)
+        //                 : TextFormat("shop %d: %s $%d *%d", i, c.name.c_str(), c.cost, c.starLevel));
+        // }
 
-        for (int i = 0; i < 9; i++) {
-            Champion& c = gs.bench[i];
-            if (c.id != 0) line(TextFormat("bench %d: %s $%d *%d", i, c.name.c_str(), c.cost, c.starLevel));
-        }
+        // for (int i = 0; i < 9; i++) {
+        //     Champion& c = gs.bench[i];
+        //     if (c.id != 0) line(TextFormat("bench %d: %s $%d *%d", i, c.name.c_str(), c.cost, c.starLevel));
+        // }
 
-        for (int rw = 0; rw < 4; rw++) {
-            for (int cl = 0; cl < 7; cl++) {
-                Champion& c = gs.board[rw][cl];
-                if (c.id != 0) line(TextFormat("board %d,%d: %s *%d", rw, cl, c.name.c_str(), c.starLevel));
-            }
-        }
+        // for (int rw = 0; rw < 4; rw++) {
+        //     for (int cl = 0; cl < 7; cl++) {
+        //         Champion& c = gs.board[rw][cl];
+        //         if (c.id != 0) line(TextFormat("board %d,%d: %s *%d", rw, cl, c.name.c_str(), c.starLevel));
+        //     }
+        // }
         EndDrawing();
 
     }
