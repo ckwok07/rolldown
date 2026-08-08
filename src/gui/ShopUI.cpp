@@ -255,7 +255,7 @@ Rectangle ShopUI::ShopSellRect() {
     };
 }
 
-void ShopUI::DrawShop(vector<Champion>& shop, int hoveredShop, bool hoverXp, bool hoverReroll, const DragState& dragState) {
+void ShopUI::DrawShop(vector<Champion>& shop, int hoveredShop, bool hoverXp, bool hoverReroll, const DragState& dragState, const Champion* champion) {
     DrawShopTrapezoid();
     DrawRectangleLinesEx(ShopBarRect(), 3.0f, SKYBLUE);
     DrawRectangleLinesEx(ShopXpRect(), 3.0f, hoverXp ? YELLOW : SKYBLUE);
@@ -283,5 +283,25 @@ void ShopUI::DrawShop(vector<Champion>& shop, int hoveredShop, bool hoverXp, boo
         Color tierColor = CostTierColor(champion.cost);
 
         DrawShopIcon(ghost, champion, tierColor, true, false);
+    }
+
+    if (dragState.phase == DragPhase::Dragging &&
+        dragState.payload == DragPayload::Champion &&
+        (dragState.source.zone == Zone::Bench || dragState.source.zone == Zone::Board)) {
+
+        Rectangle sellRect = ShopSellRect();
+
+        DrawRectangleRec(sellRect, Fade(BLACK, 0.75f));
+        Champion sold = *champion;
+        int gold = 0;
+        if (sold.starLevel == 1) gold = sold.cost;
+        else if (sold.starLevel == 2) gold = sold.cost == 1 ? 3 : (sold.cost * 3) - 1;
+        else if (sold.starLevel == 3) gold = sold.cost == 1 ? 9 : (sold.cost * 9) - 1;
+
+        const char* text = TextFormat("SELL FOR %d GOLD", gold);
+        int fontSize = 24;
+        int textWidth = MeasureText(text, fontSize);
+
+        DrawText(text, (int)(sellRect.x + sellRect.width / 2.0f - textWidth / 2.0f), (int)(sellRect.y + sellRect.height / 2.0f - fontSize / 2.0f), fontSize, WHITE);
     }
 }

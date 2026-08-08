@@ -26,5 +26,5 @@ public:
     Rectangle ShopRerollRect();
     Rectangle ShopSellRect();
 
-    void DrawShop(vector<Champion>& shop, int hoveredShop, bool hoverXp, bool hoverReroll, const DragState& dragState);
+    void DrawShop(vector<Champion>& shop, int hoveredShop, bool hoverXp, bool hoverReroll, const DragState& dragState, const Champion* champion);
 };

@@ -807,7 +807,7 @@ void App::run() {
 
         EndMode3D();
         // shop
-        shop.DrawShop(engine.gamestate.shop, hoveredShop, hoverXp, hoverReroll, drag.GetState());
+        shop.DrawShop(engine.gamestate.shop, hoveredShop, hoverXp, hoverReroll, drag.GetState(), GetDraggedChampion());
 
         // trait bar
         DrawRectangleLinesEx(TraitBarRect(), 2.0f, SKYBLUE);
