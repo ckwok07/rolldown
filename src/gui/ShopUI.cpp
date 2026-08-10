@@ -146,11 +146,11 @@ void ShopUI::DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, b
             DrawTextureCover(*splash, artRect, WHITE);
         }
 
-        int traitFontSize = 14;
-        float traitSpacing = 26.0f;
+        int traitFontSize = 15;
+        float traitSpacing = 24.0f;
 
-        float hexRadius = 7.60f;
-        float gap = 5.0f;
+        float hexRadius = 8.0f;
+        float gap = 4.0f;
 
         float traitY = artRect.y + artRect.height - champion.traits.size() * traitSpacing;
 
@@ -159,6 +159,7 @@ void ShopUI::DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, b
 
             Vector2 hexCenter = {artRect.x + gap + hexRadius, y + traitFontSize / 2.0f};
             DrawPoly(hexCenter, 6, hexRadius, 30.0f, GRAY);
+            DrawPolyLinesEx(hexCenter, 6, hexRadius, 30.0f, 1.5f, BLACK);
 
             float traitX = hexCenter.x + hexRadius + gap;
             string traitName = Set18::TRAIT_ID_TO_NAME.at(champion.traits[j]);
@@ -176,9 +177,9 @@ void ShopUI::DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, b
         // cost
         const char* costText = TextFormat("%d", champion.cost);
 
-        Vector2 costSize = MeasureTextEx(uiFont, costText, fontSize, 1.0f);
+        Vector2 costSize = MeasureTextEx(traitFont, costText, 18, 1.0f);
 
-        DrawTextEx(uiFont, costText, {(float)(infoRect.x + infoRect.width - costSize.x - 6.0f), (float)textY}, fontSize, 1.0f, WHITE);
+        DrawTextEx(traitFont, costText, {infoRect.x + infoRect.width - costSize.x - 6.0f, infoRect.y + (infoRect.height - costSize.y) / 2.0f + 1.0f}, 18, 1.0f, WHITE);
     }
 
     if (champion.id != 0 && !sourceHidden) {
@@ -219,6 +220,29 @@ void ShopUI::DrawShopTrapezoid() {
     DrawLineEx(topRight, bottomRight, thickness, SKYBLUE);
     DrawLineEx(bottomRight, bottomLeft, thickness, SKYBLUE);
     DrawLineEx(bottomLeft, topLeft, thickness, SKYBLUE);
+}
+
+Rectangle ShopUI::LockRect() {
+    Rectangle shop = ShopBarRect();
+    Rectangle lockRect = {shop.x + shop.width - shop.width * 0.062f, shop.y - shop.height * 0.21f, shop.width * 0.062f, shop.height * 0.21f};
+
+    return lockRect;
+}
+
+Rectangle ShopUI::InnerShopRect() {
+    Rectangle bar = ShopBarRect();
+    return {bar.x + bar.height * 0.04f, bar.y + bar.height * 0.04f, bar.width - bar.height * 0.08f, bar.height - bar.height * 0.04f};
+}
+
+Rectangle ShopUI::InnerLevelRect() {
+    Rectangle bar = ShopBarRect();
+    Rectangle levelRect = {bar.x, bar.y - bar.height * 0.25f, bar.width * 0.15f, bar.height * 0.25f};
+    float triangleWidth = bar.width * 0.028f;
+
+    float levelInset = levelRect.height * 0.12f;
+    float rightInset = levelInset * (sqrtf(levelRect.height * levelRect.height + triangleWidth * triangleWidth) - triangleWidth) / levelRect.height;
+
+    return {levelRect.x + levelInset, levelRect.y + levelInset, levelRect.width - levelInset - rightInset, levelRect.height - levelInset * 2.0f};
 }
 
 Rectangle ShopUI::ShopXpRect() {
@@ -272,12 +296,40 @@ Rectangle ShopUI::ShopSellRect() {
     };
 }
 
-void ShopUI::DrawShop(vector<Champion>& shop, int hoveredShop, bool hoverXp, bool hoverReroll, const DragState& dragState, const Champion* champion) {
-    DrawShopTrapezoid();
-    DrawRectangleLinesEx(ShopBarRect(), 3.0f, SKYBLUE);
+Rectangle ShopUI::ShopProbabilities() {
+    Rectangle bar = ShopBarRect();
+    Rectangle levelRect = {bar.x, bar.y - bar.height * 0.25f, bar.width * 0.15f, bar.height * 0.25f};
+
+    return {levelRect.x + levelRect.width, levelRect.y + levelRect.height * 0.27f, levelRect.width * 1.70f, levelRect.height * 0.73f};
+}
+
+void ShopUI::DrawProbabilities(Engine& engine) {
+    Rectangle probability = ShopProbabilities();
+    Rectangle firstSlot = ShopSlotRect(0);
+    const vector<int>& odds = shopodds[engine.gamestate.level - 2];
+
+    float sectionWidth = (probability.x + probability.width - firstSlot.x) / 5.0f;
+
+    for (int i = 0; i < 5; i++) {
+        const char* text = TextFormat("*%d%%", odds[i]);
+        Vector2 textSize = MeasureTextEx(traitFont, text, 14.0f, 0.5f);
+
+        float t = i / 4.0f;
+        float textX = firstSlot.x + t * ((probability.x + probability.width - textSize.x) - firstSlot.x);
+
+        DrawTextEx(traitFont, text, {textX, probability.y + (probability.height - textSize.y) / 2.0f}, 14.0f, 0.5f, CostTierColor(i + 1));
+    }
+}
+
+void ShopUI::DrawShop(Engine& engine, int hoveredShop, bool hoverXp, bool hoverReroll, const DragState& dragState, const Champion* champion) {
+    DrawShopVisual();
+    DrawXpIndicator(engine.gamestate);
+    DrawProbabilities(engine);
+    // DrawShopTrapezoid();
+    //DrawRectangleLinesEx(ShopBarRect(), 3.0f, SKYBLUE);
     DrawRectangleLinesEx(ShopXpRect(), 3.0f, hoverXp ? YELLOW : SKYBLUE);
     DrawRectangleLinesEx(ShopRerollRect(), 3.0f, hoverReroll ? YELLOW : SKYBLUE);
-
+    vector<Champion> shop = engine.gamestate.shop;
     for (int i = 0; i < 5; i++) {
         Rectangle rect = ShopSlotRect(i);
         Champion& champion = shop[i];
@@ -351,4 +403,161 @@ bool ShopUI::HandleShopDrop(Engine& engine, Drag& drag) {
     }
 
     return true;
+}
+
+void ShopUI::DrawXpIndicator(const GameState& gamestate) {
+    int currentXp = gamestate.xp;
+    int threshold = levelthresholds[gamestate.level];
+
+    if (threshold == 0) return;
+
+    Rectangle innerRect = InnerShopRect();
+    Rectangle innerLevelRect = InnerLevelRect();
+    Rectangle xp = ShopXpRect();
+
+    float y = innerLevelRect.y + innerLevelRect.height + (innerRect.y - (innerLevelRect.y + innerLevelRect.height)) * 0.25f;
+    float height = (innerRect.y - (innerLevelRect.y + innerLevelRect.height)) * 0.50f;
+
+    int sections = (threshold + 3) / 4;
+    float gap = 1.0f;
+    float sectionWidth = (xp.width - gap * (sections - 1)) / sections;
+
+    for (int i = 0; i < sections; i++) {
+        Rectangle section = {xp.x + i * (sectionWidth + gap), y, sectionWidth, height};
+        DrawRectangleRec(section, {24, 65, 90, 255});
+
+        int sectionXp = std::min(4, threshold - i * 4);
+        float fill = std::clamp((float)(currentXp - i * 4) / sectionXp, 0.0f, 1.0f);
+
+        DrawRectangleRec({section.x, section.y, section.width * fill, section.height}, {115, 243, 245, 255});
+    }
+
+    const char* levelText = TextFormat("Lvl. %d", gamestate.level);
+    Vector2 textSize = MeasureTextEx(uiFont, levelText, 20.0f, 1.0f);
+
+    DrawTextEx(uiFont, levelText, {innerLevelRect.x + 6.0f, innerLevelRect.y + (innerLevelRect.height - textSize.y) / 2.0f}, 20.0f, 1.0f, WHITE);
+
+    const char* xpText = TextFormat("%d/%d", currentXp, threshold);
+    Vector2 xpTextSize = MeasureTextEx(traitFont, xpText, 13.0f, 1.0f);
+
+    DrawTextEx(traitFont, xpText, {innerLevelRect.x + innerLevelRect.width - xpTextSize.x - 6.0f, innerLevelRect.y + (innerLevelRect.height - xpTextSize.y) / 2.0f}, 13.0f, 1.0f, WHITE);
+}
+
+void ShopUI::DrawShopVisual() {
+    // probabilities
+    Rectangle probability = ShopProbabilities();
+    DrawRectangleRec(probability, {20, 28, 29, 180});
+
+    float probTriangleWidth = probability.width * 0.08f;
+
+    DrawTriangle(
+        {probability.x + probability.width, probability.y + probability.height},
+        {probability.x + probability.width + probTriangleWidth, probability.y + probability.height},
+        {probability.x + probability.width, probability.y},
+        {20, 28, 29, 180}
+    );
+
+    // shop icons / xp and leveling
+    Rectangle bar = ShopBarRect();
+    Color color = {5, 14, 14, 255};
+
+    DrawRectangleRec(bar, color);
+
+    // level bar
+    Rectangle levelRect = { bar.x, bar.y - bar.height * 0.25f, bar.width * 0.15f, bar.height * 0.25f};
+    float triangleWidth = bar.width * 0.028f;
+
+    DrawRectangleRec(levelRect, color);
+
+    DrawTriangle(
+        {levelRect.x + levelRect.width, levelRect.y + levelRect.height},
+        {levelRect.x + levelRect.width + triangleWidth, levelRect.y + levelRect.height},
+        {levelRect.x + levelRect.width, levelRect.y},
+        color
+    );
+
+    // gold trapezoid
+
+    float centerX = (bar.x + bar.width / 2.0f) * 1.0925f;
+    float trapHeight = bar.height * 0.25f;
+    float bottomWidth = bar.width * 0.14f;
+    float topWidth = bottomWidth * 0.60f;
+
+    Vector2 topLeft = {centerX - topWidth / 2.0f, bar.y - trapHeight};
+    Vector2 topRight = {centerX + topWidth / 2.0f, bar.y - trapHeight};
+    Vector2 bottomRight = {centerX + bottomWidth / 2.0f, bar.y};
+    Vector2 bottomLeft = {centerX - bottomWidth / 2.0f, bar.y};
+
+    DrawTriangle(topLeft, bottomLeft, topRight, color);
+    DrawTriangle(topRight, bottomLeft, bottomRight, color);
+
+    // lock button
+    Rectangle lockrect = LockRect();
+    DrawRectangleRec(lockrect, color);
+
+    // inside
+
+    Rectangle innerRect = InnerShopRect();
+    DrawRectangleRec(innerRect, {14, 20, 23, 255});
+    DrawRectangleLinesEx(innerRect, 2.0f, {22, 35, 35, 255});   
+
+    Rectangle xp = ShopXpRect();
+    Rectangle firstSlot = ShopSlotRect(0);
+    float lineX = ((xp.x + xp.width) + firstSlot.x) / 2.0f;
+
+    DrawLineEx({lineX, innerRect.y}, {lineX, bar.y + bar.height}, 2.0f, {22, 35, 35, 255});
+
+    Rectangle innerLevelRect = InnerLevelRect();
+    float innerTriangleWidth = triangleWidth * (innerLevelRect.height / levelRect.height);
+
+    DrawRectangleRec(innerLevelRect, {15, 26, 27, 255});
+    DrawTriangle({innerLevelRect.x + innerLevelRect.width, innerLevelRect.y + innerLevelRect.height}, {innerLevelRect.x + innerLevelRect.width + innerTriangleWidth, innerLevelRect.y + innerLevelRect.height}, {innerLevelRect.x + innerLevelRect.width, innerLevelRect.y}, {15, 26, 27, 255});
+
+    // outlines. 
+    Color gold = {190, 156, 87, 255};
+    float blackThickness = 6.0f;
+    float goldThickness = 3.0f;
+
+    Vector2 trapPoints[] = {
+        bottomLeft,
+        topLeft,
+        topRight,
+        bottomRight
+    };
+
+    for (int i = 0; i < 3; i++) DrawLineEx(trapPoints[i], trapPoints[i + 1], blackThickness, BLACK);
+    for (int i = 0; i < 4; i++) DrawCircleV(trapPoints[i], blackThickness / 2.0f, BLACK);
+
+    for (int i = 0; i < 3; i++) DrawLineEx(trapPoints[i], trapPoints[i + 1], goldThickness, gold);
+    for (int i = 0; i < 4; i++) DrawCircleV(trapPoints[i], goldThickness / 2.0f, gold);
+
+    Vector2 points[] = {
+        {bar.x, bar.y + bar.height},
+        {levelRect.x, levelRect.y},
+        {levelRect.x + levelRect.width, levelRect.y},
+        {levelRect.x + levelRect.width + triangleWidth, bar.y},
+        {lockrect.x, bar.y},
+        {lockrect.x, lockrect.y},
+        {lockrect.x + lockrect.width, lockrect.y},
+        {bar.x + bar.width, bar.y + bar.height}
+    };
+
+    int pointCount = sizeof(points) / sizeof(points[0]);
+
+    int shadowLayers = 5;
+
+    for (int layer = shadowLayers; layer >= 1; layer--) {
+        float t = blackThickness + layer * 1.0f;
+        float alpha = 0.015f * (shadowLayers - layer + 1);
+
+        for (int i = 0; i < pointCount - 1; i++) DrawLineEx(points[i], points[i + 1], t, Fade(BLACK, alpha));
+        for (int i = 0; i < pointCount; i++) DrawCircleV(points[i], t / 2.0f, Fade(BLACK, alpha));
+    }
+
+    for (int i = 0; i < pointCount - 1; i++) DrawLineEx(points[i], points[i + 1], blackThickness, BLACK);
+    for (int i = 0; i < pointCount; i++) DrawCircleV(points[i], blackThickness / 2.0f, BLACK);
+
+    for (int i = 0; i < pointCount - 1; i++) DrawLineEx(points[i], points[i + 1], goldThickness, gold);
+    for (int i = 0; i < pointCount; i++) DrawCircleV(points[i], goldThickness / 2.0f, gold);
+
 }

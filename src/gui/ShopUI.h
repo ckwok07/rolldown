@@ -23,15 +23,26 @@ public:
 
     Rectangle ShopSlotRect(int i);
     void DrawShopTrapezoid();
+    Rectangle LockRect();
     Rectangle ShopBarRect();
     Rectangle TraitBarRect();
     void DrawTraitHexs();
+
+    Rectangle InnerShopRect();
+    Rectangle InnerLevelRect();
+
     Rectangle ShopXpRect();
     Rectangle ShopRerollRect();
     Rectangle ShopSellRect();
+    Rectangle ShopProbabilities();
+    void DrawProbabilities(Engine& engine);
 
-    void DrawShop(vector<Champion>& shop, int hoveredShop, bool hoverXp, bool hoverReroll, const DragState& dragState, const Champion* champion);
+    void DrawShop(Engine& engine, int hoveredShop, bool hoverXp, bool hoverReroll, const DragState& dragState, const Champion* champion);
+
+    void DrawXpIndicator(const GameState& gamestate);
 
     bool HandleShopDragPress(std::vector<Champion>& shop, int hoveredShop, Drag& drag);
     bool HandleShopDrop(Engine& engine, Drag& drag);
+
+    void DrawShopVisual();
 };
