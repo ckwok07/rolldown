@@ -1,5 +1,6 @@
 #include "ShopUI.h"
 #include "Drag.h"
+#include "raymath.h"
 
 ShopUI::ShopUI(/* args */)
 {
@@ -7,6 +8,17 @@ ShopUI::ShopUI(/* args */)
 
 ShopUI::~ShopUI()
 {
+    UnloadFont(traitFont);
+    UnloadFont(uiFont);
+    for (auto& [name, texture] : splashTextures) {
+        if (texture.id != 0) UnloadTexture(texture);
+    }
+}
+
+void ShopUI::init() {
+    traitFont = LoadFontEx("assets/Fonts/Spiegel.otf", 32, 0, 0);
+    uiFont = LoadFontEx("assets/Fonts/Beaufort.otf", 32, 0, 0);
+    SetTextureFilter(traitFont.texture, TEXTURE_FILTER_BILINEAR);
 }
 
 static Color CostTierColor(int cost) {
@@ -129,11 +141,11 @@ void ShopUI::DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, b
             DrawTextureCover(*splash, artRect, WHITE);
         }
 
-        int traitFontSize = 10;
-        float traitSpacing = 25.0f;
+        int traitFontSize = 14;
+        float traitSpacing = 26.0f;
 
         float hexRadius = 7.60f;
-        float gap = 4.0f;
+        float gap = 5.0f;
 
         float traitY = artRect.y + artRect.height - champion.traits.size() * traitSpacing;
 
@@ -145,7 +157,7 @@ void ShopUI::DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, b
 
             float traitX = hexCenter.x + hexRadius + gap;
             string traitName = Set18::TRAIT_ID_TO_NAME.at(champion.traits[j]);
-            DrawText(traitName.c_str(), (int)traitX, (int)y * 1.003, traitFontSize, WHITE);
+            DrawTextEx(traitFont, traitName.c_str(), {traitX, y * 1.00f}, traitFontSize, 0.5f, WHITE);
         }
 
         DrawRectangleRec(infoRect,tierColor);
@@ -154,14 +166,14 @@ void ShopUI::DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, b
         int textY = (int)(infoRect.y + (infoRect.height - fontSize)/ 1.5);
 
         // name
-        DrawText(champion.name.c_str(), (int)(infoRect.x + 6.0f), textY, fontSize, WHITE );
+        DrawTextEx(uiFont, champion.name.c_str(), {(float)(infoRect.x + 6.0f), (float)textY}, fontSize, 1.0f, WHITE);
 
         // cost
         const char* costText = TextFormat("%d", champion.cost);
 
-        int costWidth =MeasureText(costText, fontSize);
+        Vector2 costSize = MeasureTextEx(uiFont, costText, fontSize, 1.0f);
 
-        DrawText( costText,(int)(infoRect.x + infoRect.width - costWidth -6.0f), textY, fontSize, WHITE);
+        DrawTextEx(uiFont, costText, {(float)(infoRect.x + infoRect.width - costSize.x - 6.0f), (float)textY}, fontSize, 1.0f, WHITE);
     }
 
     if (champion.id != 0 && !sourceHidden) {
@@ -302,6 +314,36 @@ void ShopUI::DrawShop(vector<Champion>& shop, int hoveredShop, bool hoverXp, boo
         int fontSize = 24;
         int textWidth = MeasureText(text, fontSize);
 
-        DrawText(text, (int)(sellRect.x + sellRect.width / 2.0f - textWidth / 2.0f), (int)(sellRect.y + sellRect.height / 2.0f - fontSize / 2.0f), fontSize, WHITE);
+        Vector2 textSize = MeasureTextEx(traitFont, text, fontSize, 1.0f);
+
+        DrawTextEx(traitFont, text, {(float)(sellRect.x + sellRect.width / 2.0f - textSize.x / 2.0f), (float)(sellRect.y + sellRect.height / 2.0f - textSize.y / 2.0f)}, fontSize, 1.0f, WHITE);
     }
+}
+
+bool ShopUI::HandleShopDragPress(std::vector<Champion>& shop, int hoveredShop, Drag& drag) {
+    if (hoveredShop == -1 || shop[hoveredShop] == nullChamp) return false;
+
+    Rectangle card = ShopSlotRect(hoveredShop);
+    Vector2 mouse = GetMousePosition();
+    Vector2 offset = {mouse.x - card.x, mouse.y - card.y};
+
+    drag.BeginDrag(DragPayload::Champion, {Zone::Shop, hoveredShop, -1, -1}, offset);
+
+    return true;
+}
+
+bool ShopUI::HandleShopDrop(Engine& engine, Drag& drag) {
+    const DragState& state = drag.GetState();
+
+    if (state.source.zone != Zone::Shop) return false;
+
+    float dragDistance = Vector2Distance(state.pressPos, GetMousePosition());
+    float clickThreshold = 5.0f;
+    float buyDragDistance = ShopSlotRect(state.source.index).width * 0.5f;
+
+    if (dragDistance < clickThreshold || dragDistance >= buyDragDistance) {
+        engine.buy(state.source.index);
+    }
+
+    return true;
 }

@@ -28,6 +28,7 @@ bool App::init() {
     SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_WINDOW_TOPMOST);
     SetTraceLogLevel(LOG_WARNING);
     InitWindow(1792, 1008, "Rolldown Simulator");
+    shop.init();
 
     background = LoadTexture("assets/image2.png");
     camera.position = { 0.2f, 12.0f, 9.0f };
@@ -304,13 +305,7 @@ void App::HandleDragPress(int hoveredShop, int hoveredBench, int hoveredRow, int
     if (!IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) return;
     if (drag.GetState().phase != DragPhase::Idle) return;
 
-    Vector2 mouse = GetMousePosition();
-
-    if (hoveredShop != -1 && engine.gamestate.shop[hoveredShop] != nullChamp) {
-        Rectangle card = shop.ShopSlotRect(hoveredShop);
-        Vector2 offset = {mouse.x - card.x, mouse.y - card.y};
-
-        drag.BeginDrag(DragPayload::Champion, {Zone::Shop, hoveredShop, -1, -1}, offset);
+    if (shop.HandleShopDragPress(engine.gamestate.shop, hoveredShop, drag)) {
         return;
     }
 
@@ -343,19 +338,11 @@ SlotRef App::GetDropTarget(int hoveredBench, int hoveredRow, int hoveredCol) {
 }
 
 void App::HandleChampionDrop(const SlotRef& target) {
-    const SlotRef source = drag.GetState().source;
-    float dragDistance = Vector2Distance(drag.GetState().pressPos, GetMousePosition());
-
-    if (source.zone == Zone::Shop) {
-        float clickThreshold = 5.0f;
-        float buyDragDistance = shop.ShopSlotRect(source.index).width * 0.5f;
-
-        if (dragDistance < clickThreshold || dragDistance >= buyDragDistance) {
-            engine.buy(source.index);
-        }
-
+    if (shop.HandleShopDrop(engine, drag)) {
         return;
     }
+
+    const SlotRef source = drag.GetState().source;
 
     if (SameSlot(source, target)) {
         return;

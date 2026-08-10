@@ -7,11 +7,14 @@ class ShopUI
 {
 private:
     /* data */
+    Font traitFont;
+    Font uiFont;
 public:
     ShopUI(/* args */);
     ~ShopUI();
 
     std::unordered_map<std::string, Texture2D> splashTextures;
+    void init();
 
     Texture2D* GetChampionSplash(const std::string& championName);
     void DrawTextureCover(Texture2D texture, Rectangle destination, Color tint = WHITE);
@@ -27,4 +30,7 @@ public:
     Rectangle ShopSellRect();
 
     void DrawShop(vector<Champion>& shop, int hoveredShop, bool hoverXp, bool hoverReroll, const DragState& dragState, const Champion* champion);
+
+    bool HandleShopDragPress(std::vector<Champion>& shop, int hoveredShop, Drag& drag);
+    bool HandleShopDrop(Engine& engine, Drag& drag);
 };
