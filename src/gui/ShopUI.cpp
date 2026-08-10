@@ -8,17 +8,22 @@ ShopUI::ShopUI(/* args */)
 
 ShopUI::~ShopUI()
 {
-    UnloadFont(traitFont);
-    UnloadFont(uiFont);
-    for (auto& [name, texture] : splashTextures) {
-        if (texture.id != 0) UnloadTexture(texture);
-    }
 }
 
 void ShopUI::init() {
     traitFont = LoadFontEx("assets/Fonts/Spiegel.otf", 32, 0, 0);
     uiFont = LoadFontEx("assets/Fonts/Beaufort.otf", 32, 0, 0);
     SetTextureFilter(traitFont.texture, TEXTURE_FILTER_BILINEAR);
+}
+
+void ShopUI::shutdown() {
+    UnloadFont(traitFont);
+    UnloadFont(uiFont);
+    for (auto& [name, texture] : splashTextures) {
+        if (texture.id != 0) UnloadTexture(texture);
+    }
+    traitFont = {};
+    uiFont = {};
 }
 
 static Color CostTierColor(int cost) {

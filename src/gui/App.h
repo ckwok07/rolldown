@@ -6,6 +6,7 @@
 #include "../Engine.h"
 #include "Drag.h"
 #include "ShopUI.h"
+#include "TraitUI.h"
 
 class App
 {
@@ -34,6 +35,9 @@ private:
     Drag drag;
     // shop
     ShopUI shop;
+
+    // trait
+    TraitUI traits;
 
     void HandleDragPress(int hoveredShop, int hoveredBench, int hoveredRow, int hoveredCol);
     void HandleDragRelease(int hoveredBench, int hoveredRow, int hoveredCol);

@@ -7,14 +7,15 @@ class ShopUI
 {
 private:
     /* data */
-    Font traitFont;
-    Font uiFont;
+    Font traitFont = {};
+    Font uiFont = {};
 public:
     ShopUI(/* args */);
     ~ShopUI();
 
     std::unordered_map<std::string, Texture2D> splashTextures;
     void init();
+    void shutdown();
 
     Texture2D* GetChampionSplash(const std::string& championName);
     void DrawTextureCover(Texture2D texture, Rectangle destination, Color tint = WHITE);

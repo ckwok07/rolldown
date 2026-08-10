@@ -29,6 +29,7 @@ bool App::init() {
     SetTraceLogLevel(LOG_WARNING);
     InitWindow(1792, 1008, "Rolldown Simulator");
     shop.init();
+    traits.init();
 
     background = LoadTexture("assets/image2.png");
     camera.position = { 0.2f, 12.0f, 9.0f };
@@ -184,121 +185,121 @@ Vector3 App::BenchCenter(int i) {
 }
 
 
-Rectangle App::TraitBarRect() {
-    float H = (float)GetScreenHeight();
-    float W = (float)GetScreenWidth();
+// Rectangle App::TraitBarRect() {
+//     float H = (float)GetScreenHeight();
+//     float W = (float)GetScreenWidth();
 
-    float barH   = H * 0.54;
-    float barW   = barH * 0.145;
-    float bottom = 0;
+//     float barH   = H * 0.54;
+//     float barW   = barH * 0.145;
+//     float bottom = 0;
 
-    return { 0.0f, (H - barH) / 2.15f, barW, barH };
-}
+//     return { 0.0f, (H - barH) / 2.15f, barW, barH };
+// }
 
-void App::DrawTraitHexs() {
-    const auto* traitTable = &Set18::ALL_TRAITS;
-    const auto* nameTable = &Set18::TRAIT_ID_TO_NAME;
+// void App::DrawTraitHexs() {
+//     const auto* traitTable = &Set18::ALL_TRAITS;
+//     const auto* nameTable = &Set18::TRAIT_ID_TO_NAME;
 
-    if (engine.gamestate.activeSet == SetId::Set17) {
-        // traitTable = &Set17::ALL_TRAITS;
-        // nameTable = &Set17::TRAIT_ID_TO_NAME;
-    }
+//     if (engine.gamestate.activeSet == SetId::Set17) {
+//         // traitTable = &Set17::ALL_TRAITS;
+//         // nameTable = &Set17::TRAIT_ID_TO_NAME;
+//     }
 
-    static int scrollOffset = 0;
+//     static int scrollOffset = 0;
 
-    Rectangle bar = TraitBarRect();
-    const float top = bar.y + bar.height * 0.085f;
-    const float slotH = bar.height * 0.086f;
-    const float cx = bar.width * 0.92f;
-    const int total = (int)engine.gamestate.activeTraits.size();
+//     Rectangle bar = TraitBarRect();
+//     const float top = bar.y + bar.height * 0.085f;
+//     const float slotH = bar.height * 0.086f;
+//     const float cx = bar.width * 0.92f;
+//     const int total = (int)engine.gamestate.activeTraits.size();
 
-    int index = 0;
-    int drawn = 0;
+//     int index = 0;
+//     int drawn = 0;
 
-    for (const auto& entry : engine.gamestate.activeTraits) {
-        const int traitId    = entry.id;
-        const int traitCount = entry.count;
-        if (index < scrollOffset) {
-            index++;
-            continue;
-        }
+//     for (const auto& entry : engine.gamestate.activeTraits) {
+//         const int traitId    = entry.id;
+//         const int traitCount = entry.count;
+//         if (index < scrollOffset) {
+//             index++;
+//             continue;
+//         }
 
-        if (drawn >= 9) break;
+//         if (drawn >= 9) break;
 
-        const float cy = top + drawn * slotH + slotH / 2.0f;
+//         const float cy = top + drawn * slotH + slotH / 2.0f;
 
-        std::string thresholds;
+//         std::string thresholds;
 
-        auto tiersIt = traitTable->find(traitId);
-        if (tiersIt != traitTable->end()) {
-            for (size_t i = 0; i < tiersIt->second.first.size(); i++) {
-                if (i > 0) thresholds += " > ";
-                thresholds += std::to_string(tiersIt->second.first[i]);
-            }
-        }
+//         auto tiersIt = traitTable->find(traitId);
+//         if (tiersIt != traitTable->end()) {
+//             for (size_t i = 0; i < tiersIt->second.first.size(); i++) {
+//                 if (i > 0) thresholds += " > ";
+//                 thresholds += std::to_string(tiersIt->second.first[i]);
+//             }
+//         }
 
-        auto nameIt = nameTable->find(traitId);
-        const std::string name = nameIt != nameTable->end() ? nameIt->second : "";
+//         auto nameIt = nameTable->find(traitId);
+//         const std::string name = nameIt != nameTable->end() ? nameIt->second : "";
 
-        const float rowH = slotH * 0.75f;
-        const float pad = rowH * 0.2f;
-        const float hexRadius = bar.width * 0.23f;
-        const float numberH = rowH * 0.62f;
-        const float numberW = numberH * 0.9f;
-        const float numberX = cx + hexRadius + rowH * 0.16f;
-        const float textX = numberX + numberW + pad;
+//         const float rowH = slotH * 0.75f;
+//         const float pad = rowH * 0.2f;
+//         const float hexRadius = bar.width * 0.23f;
+//         const float numberH = rowH * 0.62f;
+//         const float numberW = numberH * 0.9f;
+//         const float numberX = cx + hexRadius + rowH * 0.16f;
+//         const float textX = numberX + numberW + pad;
 
-        const int textW = MeasureText(name.c_str(), 14) > MeasureText(thresholds.c_str(), 12)
-            ? MeasureText(name.c_str(), 14)
-            : MeasureText(thresholds.c_str(), 12);
+//         const int textW = MeasureText(name.c_str(), 14) > MeasureText(thresholds.c_str(), 12)
+//             ? MeasureText(name.c_str(), 14)
+//             : MeasureText(thresholds.c_str(), 12);
 
-        DrawRectangle((int)cx, (int)(cy - rowH / 2.0f), (int)((textX - cx) + textW + pad), (int)rowH, Fade(DARKGRAY, 0.6f));
-        DrawRectangle((int)numberX, (int)(cy - numberH / 2.0f), (int)numberW, (int)numberH, Fade(WHITE, 0.5f));
+//         DrawRectangle((int)cx, (int)(cy - rowH / 2.0f), (int)((textX - cx) + textW + pad), (int)rowH, Fade(DARKGRAY, 0.6f));
+//         DrawRectangle((int)numberX, (int)(cy - numberH / 2.0f), (int)numberW, (int)numberH, Fade(WHITE, 0.5f));
 
-        const char* numberText = TextFormat("%d", traitCount);
-        Vector2 numberSize = MeasureTextEx(GetFontDefault(), numberText, 14.0f, 1.0f);
+//         const char* numberText = TextFormat("%d", traitCount);
+//         Vector2 numberSize = MeasureTextEx(GetFontDefault(), numberText, 14.0f, 1.0f);
 
-        DrawText(numberText, (int)(numberX + numberW / 2.0f - numberSize.x / 2.0f), (int)(cy - numberSize.y / 2.0f), 14, WHITE);
+//         DrawText(numberText, (int)(numberX + numberW / 2.0f - numberSize.x / 2.0f), (int)(cy - numberSize.y / 2.0f), 14, WHITE);
 
-        Vector2 nameSize = MeasureTextEx(GetFontDefault(), name.c_str(), 13.0f, 1.0f);
-        Vector2 thresholdSize = MeasureTextEx(GetFontDefault(), thresholds.c_str(), 11.0f, 1.0f);
+//         Vector2 nameSize = MeasureTextEx(GetFontDefault(), name.c_str(), 13.0f, 1.0f);
+//         Vector2 thresholdSize = MeasureTextEx(GetFontDefault(), thresholds.c_str(), 11.0f, 1.0f);
 
-        const float thresholdY = cy + rowH / 2.0f - rowH * 0.12f - thresholdSize.y;
-        const float nameY = thresholdY - 1.0f - nameSize.y;
+//         const float thresholdY = cy + rowH / 2.0f - rowH * 0.12f - thresholdSize.y;
+//         const float nameY = thresholdY - 1.0f - nameSize.y;
 
-        DrawText(name.c_str(), (int)textX, (int)nameY, 13, WHITE);
-        DrawText(thresholds.c_str(), (int)textX, (int)thresholdY, 11, GRAY);
-        DrawPoly({cx, cy}, 6, hexRadius, 30.0f, SKYBLUE);
+//         DrawText(name.c_str(), (int)textX, (int)nameY, 13, WHITE);
+//         DrawText(thresholds.c_str(), (int)textX, (int)thresholdY, 11, GRAY);
+//         DrawPoly({cx, cy}, 6, hexRadius, 30.0f, SKYBLUE);
 
-        drawn++;
-        index++;
-    }
+//         drawn++;
+//         index++;
+//     }
 
-    const int remaining = total - scrollOffset - drawn;
-    const float size = bar.width * 0.21f;
-    const float overflowY = top + 9.0f * slotH + slotH / 2.0f;
+//     const int remaining = total - scrollOffset - drawn;
+//     const float size = bar.width * 0.21f;
+//     const float overflowY = top + 9.0f * slotH + slotH / 2.0f;
 
-    if (remaining > 0) {
-        Vector2 points[5] = {
-            {cx - size, overflowY + size * 0.4f},
-            {cx, overflowY + size},
-            {cx + size, overflowY + size * 0.4f},
-            {cx + size, overflowY - size},
-            {cx - size, overflowY - size}
-        };
+//     if (remaining > 0) {
+//         Vector2 points[5] = {
+//             {cx - size, overflowY + size * 0.4f},
+//             {cx, overflowY + size},
+//             {cx + size, overflowY + size * 0.4f},
+//             {cx + size, overflowY - size},
+//             {cx - size, overflowY - size}
+//         };
 
-        DrawTriangleFan(points, 5, SKYBLUE);
-    }
+//         DrawTriangleFan(points, 5, SKYBLUE);
+//     }
 
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        Rectangle overflowRect = {cx - size, overflowY - size, size * 2.0f, size * 2.0f};
-        bool clickedOverflow = remaining > 0 && CheckCollisionPointRec(GetMousePosition(), overflowRect);
+//     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+//         Rectangle overflowRect = {cx - size, overflowY - size, size * 2.0f, size * 2.0f};
+//         bool clickedOverflow = remaining > 0 && CheckCollisionPointRec(GetMousePosition(), overflowRect);
 
-        scrollOffset = clickedOverflow
-            ? (scrollOffset + 9 >= total ? 0 : scrollOffset + 9)
-            : 0;
-    }
-}
+//         scrollOffset = clickedOverflow
+//             ? (scrollOffset + 9 >= total ? 0 : scrollOffset + 9)
+//             : 0;
+//     }
+// }
 
 
 void App::HandleDragPress(int hoveredShop, int hoveredBench, int hoveredRow, int hoveredCol) {
@@ -797,10 +798,12 @@ void App::run() {
         shop.DrawShop(engine.gamestate.shop, hoveredShop, hoverXp, hoverReroll, drag.GetState(), GetDraggedChampion());
 
         // trait bar
-        DrawRectangleLinesEx(TraitBarRect(), 2.0f, SKYBLUE);
+        // DrawRectangleLinesEx(TraitBarRect(), 2.0f, SKYBLUE);
 
-        Rectangle bar = TraitBarRect();
-        DrawTraitHexs();
+        // Rectangle bar = TraitBarRect();
+        // DrawTraitHexs();
+
+        traits.DrawTraits(engine);
 
         // xp and reroll mechanics
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoverXp) {
@@ -882,6 +885,9 @@ void App::shutdown() {
     for (auto& e : champAnims)  UnloadModelAnimations(e.second, champAnimCounts[e.first]);
     champModels.clear();
     champAnims.clear();
+
+    shop.shutdown();
+    traits.shutdown();
 
     if (background.id != 0) {
         UnloadTexture(background);
