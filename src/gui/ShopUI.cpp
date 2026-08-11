@@ -433,17 +433,53 @@ void ShopUI::DrawGold() {
     DrawTriangle(innerTopRight, innerBottomLeft, innerBottomRight, innerColor);
 }
 
+void ShopUI::DrawXp(bool hoverXp) {
+    Rectangle rect = ShopXpRect();
+    DrawRectangleRec(rect, BLACK);
+
+    float inset = rect.height * 0.03f;
+    Rectangle blackoutline = {rect.x + inset, rect.y + inset, rect.width - inset * 2.0f, rect.height - inset * 2.0f};
+    DrawRectangleRec(blackoutline, {86, 123, 141, 255});
+
+    inset = blackoutline.height * 0.04f;
+    Rectangle inside = {blackoutline.x + inset, blackoutline.y + inset, blackoutline.width - inset * 2.0f, blackoutline.height - inset * 2.0f};
+    DrawRectangleRec(inside, {1,18,29,255});
+
+    // {19,32,42,255}
+
+    inset = inside.height * 0.06f;
+    Rectangle buyxppart = {inside.x + inset, inside.y + inset, inside.width - inset * 2.0f, inside.height - inset * 2.0f};
+    DrawRectangleRec(buyxppart, {19,32,42,255});
+
+    float textSize = buyxppart.height * 0.35f;
+    DrawTextEx(uiFont, "Buy XP", {buyxppart.x + buyxppart.width * 0.05f, buyxppart.y + buyxppart.height * 0.20f}, textSize, 0.0f, WHITE);
+
+    float goldX = buyxppart.x + buyxppart.width * 0.08f;
+    float goldY = buyxppart.y + buyxppart.height * 0.73f;
+    float goldRadius = buyxppart.height * 0.07f;
+
+    DrawCircle(goldX, goldY, goldRadius, {180, 157, 100, 255});
+
+    float goldTextSize = buyxppart.height * 0.22f;
+    DrawTextEx(uiFont, "4", {goldX + goldRadius * 1.8f, goldY - goldTextSize / 2.0f}, goldTextSize, 0.0f, WHITE);
+}
+
+void ShopUI::DrawReroll(bool hoverReroll) {
+
+}
+
 void ShopUI::DrawShop(Engine& engine, int hoveredShop, bool hoverXp, bool hoverReroll, const DragState& dragState, const Champion* champion) {
     DrawShopVisual();
     DrawXpIndicator(engine.gamestate);
     DrawProbabilities(engine);
     DrawLock();
     DrawGold();
+    DrawXp(hoverXp);
 
     // DrawShopTrapezoid();
     //DrawRectangleLinesEx(ShopBarRect(), 3.0f, SKYBLUE);
-    DrawRectangleLinesEx(ShopXpRect(), 3.0f, hoverXp ? YELLOW : SKYBLUE);
-    DrawRectangleLinesEx(ShopRerollRect(), 3.0f, hoverReroll ? YELLOW : SKYBLUE);
+    // DrawRectangleLinesEx(ShopXpRect(), 3.0f, hoverXp ? YELLOW : SKYBLUE);
+    // DrawRectangleLinesEx(ShopRerollRect(), 3.0f, hoverReroll ? YELLOW : SKYBLUE);
     vector<Champion> shop = engine.gamestate.shop;
 
     for (int i = 0; i < 5; i++) {
@@ -630,7 +666,7 @@ void ShopUI::DrawShopVisual() {
     DrawTriangle({innerLevelRect.x + innerLevelRect.width, innerLevelRect.y + innerLevelRect.height}, {innerLevelRect.x + innerLevelRect.width + innerTriangleWidth, innerLevelRect.y + innerLevelRect.height}, {innerLevelRect.x + innerLevelRect.width, innerLevelRect.y}, {15, 26, 27, 255});
 
     // outlines. 
-    Color gold = {190, 156, 87, 255};
+    Color gold = {111, 93, 57, 255};
     float blackThickness = 6.0f;
     float goldThickness = 3.0f;
 

@@ -39,6 +39,8 @@ public:
     void DrawProbabilities(Engine& engine);
     void DrawLock();
     void DrawGold();
+    void DrawXp(bool hoverXp);
+    void DrawReroll(bool hoverReroll);
 
     void DrawShop(Engine& engine, int hoveredShop, bool hoverXp, bool hoverReroll, const DragState& dragState, const Champion* champion);
 
