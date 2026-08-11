@@ -37,8 +37,8 @@ public:
     Rectangle ShopSellRect();
     Rectangle ShopProbabilities();
     void DrawProbabilities(Engine& engine);
-    void DrawLock();
-    void DrawGold();
+    void DrawLock(bool locked);
+    void DrawGold(int gold);
     void DrawXp(bool hoverXp);
     void DrawReroll(bool hoverReroll);
 

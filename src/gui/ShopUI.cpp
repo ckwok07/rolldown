@@ -322,7 +322,7 @@ void ShopUI::DrawProbabilities(Engine& engine) {
     }
 }
 
-void ShopUI::DrawLock() {
+void ShopUI::DrawLock(bool locked) {
     Rectangle lock = LockRect();
 
     float inset = lock.height * 0.14f;
@@ -341,7 +341,7 @@ void ShopUI::DrawLock() {
 
 #include "rlgl.h"
 
-void ShopUI::DrawGold() {
+void ShopUI::DrawGold(int gold) {
     Rectangle shop = ShopBarRect();
 
     float centerX = (shop.x + shop.width / 2.0f) * 1.0925f;
@@ -431,28 +431,43 @@ void ShopUI::DrawGold() {
 
     DrawTriangle(innerTopLeft, innerBottomLeft, innerTopRight, innerColor);
     DrawTriangle(innerTopRight, innerBottomLeft, innerBottomRight, innerColor);
+
+    std::string goldText = std::to_string(gold);
+
+    float fontSize = middle.height * 0.60f;
+    float circleRadius = fontSize * 0.20f;
+    float gap = fontSize * 0.25f;
+
+    Vector2 textSize = MeasureTextEx(uiFont, goldText.c_str(), fontSize, 0.0f);
+
+    float totalWidth = circleRadius * 2.0f + gap + textSize.x;
+    float startX = middle.x + (middle.width - totalWidth) / 2.0f;
+    float centerY = middle.y + middle.height / 2.0f;
+
+    DrawCircle(startX + circleRadius, centerY, circleRadius, {180, 157, 100, 255});
+    DrawTextEx(uiFont, goldText.c_str(), {startX + circleRadius * 2.0f + gap, centerY - textSize.y / 2.0f}, fontSize, 0.0f, WHITE);
 }
 
 void ShopUI::DrawXp(bool hoverXp) {
     Rectangle rect = ShopXpRect();
     DrawRectangleRec(rect, BLACK);
 
-    float inset = rect.height * 0.03f;
+    float inset = rect.height * 0.02f;
     Rectangle blackoutline = {rect.x + inset, rect.y + inset, rect.width - inset * 2.0f, rect.height - inset * 2.0f};
     DrawRectangleRec(blackoutline, {86, 123, 141, 255});
 
-    inset = blackoutline.height * 0.04f;
+    inset = blackoutline.height * 0.02f;
     Rectangle inside = {blackoutline.x + inset, blackoutline.y + inset, blackoutline.width - inset * 2.0f, blackoutline.height - inset * 2.0f};
     DrawRectangleRec(inside, {1,18,29,255});
 
     // {19,32,42,255}
 
-    inset = inside.height * 0.06f;
+    inset = inside.height * 0.02f;
     Rectangle buyxppart = {inside.x + inset, inside.y + inset, inside.width - inset * 2.0f, inside.height - inset * 2.0f};
     DrawRectangleRec(buyxppart, {19,32,42,255});
 
-    float textSize = buyxppart.height * 0.35f;
-    DrawTextEx(uiFont, "Buy XP", {buyxppart.x + buyxppart.width * 0.05f, buyxppart.y + buyxppart.height * 0.20f}, textSize, 0.0f, WHITE);
+    float textSize = buyxppart.height * 0.30f;
+    DrawTextEx(uiFont, "Buy XP", {buyxppart.x + buyxppart.width * 0.05f, buyxppart.y + buyxppart.height * 0.18f}, textSize, 0.0f, WHITE);
 
     float goldX = buyxppart.x + buyxppart.width * 0.08f;
     float goldY = buyxppart.y + buyxppart.height * 0.73f;
@@ -462,9 +477,61 @@ void ShopUI::DrawXp(bool hoverXp) {
 
     float goldTextSize = buyxppart.height * 0.22f;
     DrawTextEx(uiFont, "4", {goldX + goldRadius * 1.8f, goldY - goldTextSize / 2.0f}, goldTextSize, 0.0f, WHITE);
+
+    Rectangle iconRect = { buyxppart.x + buyxppart.width * 0.68f, buyxppart.y, buyxppart.width * 0.32f, buyxppart.height };
+    DrawRectangleRec(iconRect, {34, 59, 74, 255});
+
+    float angle = 60.0f * DEG2RAD;
+    float triangleWidth = iconRect.height / tanf(angle);
+
+    Vector2 triangleTopLeft = {iconRect.x - triangleWidth, iconRect.y};
+    Vector2 triangleTopRight = {iconRect.x, iconRect.y};
+    Vector2 triangleBottomRight = {iconRect.x, iconRect.y + iconRect.height};
+
+    DrawTriangle(triangleTopLeft, triangleBottomRight, triangleTopRight, {34, 59, 74, 255});
 }
 
 void ShopUI::DrawReroll(bool hoverReroll) {
+    Rectangle rect = ShopRerollRect();
+    DrawRectangleRec(rect, BLACK);
+
+    float inset = rect.height * 0.02f;
+    Rectangle blackoutline = {rect.x + inset, rect.y + inset, rect.width - inset * 2.0f, rect.height - inset * 2.0f};
+    DrawRectangleRec(blackoutline, {111, 93, 57, 255});
+
+    inset = blackoutline.height * 0.02f;
+    Rectangle inside = {blackoutline.x + inset, blackoutline.y + inset, blackoutline.width - inset * 2.0f, blackoutline.height - inset * 2.0f};
+    DrawRectangleRec(inside, {1,18,29,255});
+
+    // {19,32,42,255}
+
+    inset = inside.height * 0.02f;
+    Rectangle buyxppart = {inside.x + inset, inside.y + inset, inside.width - inset * 2.0f, inside.height - inset * 2.0f};
+    DrawRectangleRec(buyxppart, {31,33,24,255});
+
+    float textSize = buyxppart.height * 0.30f;
+    DrawTextEx(uiFont, "Refresh", {buyxppart.x + buyxppart.width * 0.05f, buyxppart.y + buyxppart.height * 0.18f}, textSize, 0.0f, WHITE);
+
+    float goldX = buyxppart.x + buyxppart.width * 0.08f;
+    float goldY = buyxppart.y + buyxppart.height * 0.73f;
+    float goldRadius = buyxppart.height * 0.07f;
+
+    DrawCircle(goldX, goldY, goldRadius, {180, 157, 100, 255});
+
+    float goldTextSize = buyxppart.height * 0.22f;
+    DrawTextEx(uiFont, "2", {goldX + goldRadius * 1.8f, goldY - goldTextSize / 2.0f}, goldTextSize, 0.0f, WHITE);
+
+    Rectangle iconRect = { buyxppart.x + buyxppart.width * 0.68f, buyxppart.y, buyxppart.width * 0.32f, buyxppart.height };
+    DrawRectangleRec(iconRect, {70, 64, 43, 255});
+
+    float angle = 60.0f * DEG2RAD;
+    float triangleWidth = iconRect.height / tanf(angle);
+
+    Vector2 triangleTopLeft = {iconRect.x - triangleWidth, iconRect.y};
+    Vector2 triangleTopRight = {iconRect.x, iconRect.y};
+    Vector2 triangleBottomRight = {iconRect.x, iconRect.y + iconRect.height};
+
+    DrawTriangle(triangleTopLeft, triangleBottomRight, triangleTopRight, {70, 64, 43, 255});
 
 }
 
@@ -472,9 +539,10 @@ void ShopUI::DrawShop(Engine& engine, int hoveredShop, bool hoverXp, bool hoverR
     DrawShopVisual();
     DrawXpIndicator(engine.gamestate);
     DrawProbabilities(engine);
-    DrawLock();
-    DrawGold();
+    DrawLock(engine.gamestate.shoplocked);
+    DrawGold(engine.gamestate.gold);
     DrawXp(hoverXp);
+    DrawReroll(hoverReroll);
 
     // DrawShopTrapezoid();
     //DrawRectangleLinesEx(ShopBarRect(), 3.0f, SKYBLUE);

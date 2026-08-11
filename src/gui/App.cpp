@@ -471,6 +471,7 @@ void App::run() {
 
         bool hoverXp = CheckCollisionPointRec(GetMousePosition(), shop.ShopXpRect());
         bool hoverReroll = CheckCollisionPointRec(GetMousePosition(), shop.ShopRerollRect());
+        bool hoverLock = CheckCollisionPointRec(GetMousePosition(), shop.LockRect());
 
         Ray ray = GetScreenToWorldRay(GetMousePosition(), camera);
         for (int i = 0; i < 5; i++) {
@@ -811,6 +812,10 @@ void App::run() {
         }
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoverReroll) {
             engine.roll();
+        }
+
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoverLock) {
+            engine.gamestate.shoplocked = !engine.gamestate.shoplocked;
         }
         if (IsKeyPressed(KEY_D)) engine.roll();
         if (IsKeyPressed(KEY_F)) engine.levelup();
