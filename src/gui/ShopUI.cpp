@@ -1,6 +1,7 @@
 #include "ShopUI.h"
 #include "Drag.h"
 #include "raymath.h"
+#include "rlgl.h"
 
 ShopUI::ShopUI(/* args */)
 {
@@ -321,15 +322,130 @@ void ShopUI::DrawProbabilities(Engine& engine) {
     }
 }
 
+void ShopUI::DrawLock() {
+    Rectangle lock = LockRect();
+
+    float inset = lock.height * 0.14f;
+    Rectangle rect = {lock.x + inset, lock.y + inset, lock.width - inset * 2.0f, lock.height - inset};
+
+    Color topColor = {28, 66, 66, 255};
+    Color bottomColor = {22, 35, 35, 255};
+
+    DrawRectangleGradientEx(rect, topColor, bottomColor, bottomColor, topColor);
+
+    inset = rect.height * 0.06f;
+    Rectangle innerect = {rect.x + inset, rect.y + inset, rect.width - inset * 2.0f, rect.height - inset * 2.0f};
+
+    DrawRectangleRec(innerect, {14, 20, 23, 255});
+}
+
+#include "rlgl.h"
+
+void ShopUI::DrawGold() {
+    Rectangle shop = ShopBarRect();
+
+    float centerX = (shop.x + shop.width / 2.0f) * 1.0925f;
+    float height = shop.height * 0.25f;
+    float bottomWidth = shop.width * 0.14f;
+    float topWidth = bottomWidth * 0.60f;
+
+    Vector2 topLeft = {centerX - topWidth / 2.0f, shop.y - height};
+    Vector2 topRight = {centerX + topWidth / 2.0f, shop.y - height};
+    Vector2 bottomRight = {centerX + bottomWidth / 2.0f, shop.y};
+    Vector2 bottomLeft = {centerX - bottomWidth / 2.0f, shop.y};
+
+    float inset = 5.0f;
+    float run = (bottomWidth - topWidth) / 2.0f;
+    float slope = run / height;
+    float sideOffsetX = inset * sqrtf(1.0f + slope * slope);
+
+    float topY = topLeft.y + inset;
+    float bottomY = bottomLeft.y - inset;
+
+    float topHalfWidth = topWidth / 2.0f + slope * inset - sideOffsetX;
+    float bottomHalfWidth = bottomWidth / 2.0f - slope * inset - sideOffsetX;
+
+    Vector2 leftTop = {centerX - topHalfWidth, topY};
+    Vector2 leftBottom = {centerX - bottomHalfWidth, bottomY};
+    Vector2 leftInnerBottom = {leftTop.x, bottomY};
+
+    Vector2 rightTop = {centerX + topHalfWidth, topY};
+    Vector2 rightInnerBottom = {rightTop.x, bottomY};
+    Vector2 rightBottom = {centerX + bottomHalfWidth, bottomY};
+
+    Rectangle middle = {leftTop.x, leftTop.y, rightTop.x - leftTop.x, bottomY - topY};
+
+    Color topColor = {28, 66, 66, 255};
+    Color bottomColor = {22, 35, 35, 255};
+
+    rlBegin(RL_TRIANGLES);
+
+    rlColor4ub(topColor.r, topColor.g, topColor.b, topColor.a);
+    rlVertex2f(leftTop.x, leftTop.y);
+
+    rlColor4ub(bottomColor.r, bottomColor.g, bottomColor.b, bottomColor.a);
+    rlVertex2f(leftBottom.x, leftBottom.y);
+
+    rlColor4ub(bottomColor.r, bottomColor.g, bottomColor.b, bottomColor.a);
+    rlVertex2f(leftInnerBottom.x, leftInnerBottom.y);
+
+    rlEnd();
+
+    DrawRectangleGradientEx(middle, topColor, bottomColor, bottomColor, topColor);
+
+    rlBegin(RL_TRIANGLES);
+
+    rlColor4ub(topColor.r, topColor.g, topColor.b, topColor.a);
+    rlVertex2f(rightTop.x, rightTop.y);
+
+    rlColor4ub(bottomColor.r, bottomColor.g, bottomColor.b, bottomColor.a);
+    rlVertex2f(rightInnerBottom.x, rightInnerBottom.y);
+
+    rlColor4ub(bottomColor.r, bottomColor.g, bottomColor.b, bottomColor.a);
+    rlVertex2f(rightBottom.x, rightBottom.y);
+
+    rlEnd();
+
+    float innerInset = 2.0f;
+
+    float innerHeight = leftBottom.y - leftTop.y;
+    float innerTopWidth = rightTop.x - leftTop.x;
+    float innerBottomWidth = rightBottom.x - leftBottom.x;
+
+    float innerRun = (innerBottomWidth - innerTopWidth) / 2.0f;
+    float innerSlope = innerRun / innerHeight;
+    float innerSideOffsetX = innerInset * sqrtf(1.0f + innerSlope * innerSlope);
+
+    float innerTopY = leftTop.y + innerInset;
+    float innerBottomY = leftBottom.y - innerInset;
+
+    float innerTopHalfWidth = innerTopWidth / 2.0f + innerSlope * innerInset - innerSideOffsetX;
+    float innerBottomHalfWidth = innerBottomWidth / 2.0f - innerSlope * innerInset - innerSideOffsetX;
+
+    Vector2 innerTopLeft = {centerX - innerTopHalfWidth, innerTopY};
+    Vector2 innerTopRight = {centerX + innerTopHalfWidth, innerTopY};
+    Vector2 innerBottomRight = {centerX + innerBottomHalfWidth, innerBottomY};
+    Vector2 innerBottomLeft = {centerX - innerBottomHalfWidth, innerBottomY};
+
+    Color innerColor = {14, 20, 23, 255};
+
+    DrawTriangle(innerTopLeft, innerBottomLeft, innerTopRight, innerColor);
+    DrawTriangle(innerTopRight, innerBottomLeft, innerBottomRight, innerColor);
+}
+
 void ShopUI::DrawShop(Engine& engine, int hoveredShop, bool hoverXp, bool hoverReroll, const DragState& dragState, const Champion* champion) {
     DrawShopVisual();
     DrawXpIndicator(engine.gamestate);
     DrawProbabilities(engine);
+    DrawLock();
+    DrawGold();
+
     // DrawShopTrapezoid();
     //DrawRectangleLinesEx(ShopBarRect(), 3.0f, SKYBLUE);
     DrawRectangleLinesEx(ShopXpRect(), 3.0f, hoverXp ? YELLOW : SKYBLUE);
     DrawRectangleLinesEx(ShopRerollRect(), 3.0f, hoverReroll ? YELLOW : SKYBLUE);
     vector<Champion> shop = engine.gamestate.shop;
+
     for (int i = 0; i < 5; i++) {
         Rectangle rect = ShopSlotRect(i);
         Champion& champion = shop[i];
@@ -360,20 +476,20 @@ void ShopUI::DrawShop(Engine& engine, int hoveredShop, bool hoverXp, bool hoverR
 
         Rectangle sellRect = ShopSellRect();
 
-        DrawRectangleRec(sellRect, Fade(BLACK, 0.75f));
+        DrawRectangleRec(sellRect, {14, 20, 23, 255});
         Champion sold = *champion;
         int gold = 0;
         if (sold.starLevel == 1) gold = sold.cost;
         else if (sold.starLevel == 2) gold = sold.cost == 1 ? 3 : (sold.cost * 3) - 1;
         else if (sold.starLevel == 3) gold = sold.cost == 1 ? 9 : (sold.cost * 9) - 1;
 
-        const char* text = TextFormat("SELL FOR %d GOLD", gold);
+        const char* text = TextFormat("Sell for %dg", gold);
         int fontSize = 24;
         int textWidth = MeasureText(text, fontSize);
 
-        Vector2 textSize = MeasureTextEx(traitFont, text, fontSize, 1.0f);
+        Vector2 textSize = MeasureTextEx(uiFont, text, fontSize, 1.0f);
 
-        DrawTextEx(traitFont, text, {(float)(sellRect.x + sellRect.width / 2.0f - textSize.x / 2.0f), (float)(sellRect.y + sellRect.height / 2.0f - textSize.y / 2.0f)}, fontSize, 1.0f, WHITE);
+        DrawTextEx(uiFont, text, {(float)(sellRect.x + sellRect.width / 2.0f - textSize.x / 2.0f), (float)(sellRect.y + sellRect.height / 2.0f - textSize.y / 2.0f)}, fontSize, 1.0f, {190, 156, 87, 255});
     }
 }
 

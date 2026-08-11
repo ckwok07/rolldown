@@ -24,6 +24,7 @@ public:
     Rectangle ShopSlotRect(int i);
     void DrawShopTrapezoid();
     Rectangle LockRect();
+    
     Rectangle ShopBarRect();
     Rectangle TraitBarRect();
     void DrawTraitHexs();
@@ -36,6 +37,8 @@ public:
     Rectangle ShopSellRect();
     Rectangle ShopProbabilities();
     void DrawProbabilities(Engine& engine);
+    void DrawLock();
+    void DrawGold();
 
     void DrawShop(Engine& engine, int hoveredShop, bool hoverXp, bool hoverReroll, const DragState& dragState, const Champion* champion);
 

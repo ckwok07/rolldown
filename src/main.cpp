@@ -406,23 +406,23 @@ using namespace std;
 //     return 0;
 // }
 
-// #include "gui/App.h"
-
-// int main() {
-//     App app;
-
-//     if (!app.init()) {
-//         return -1;
-//     }
-
-//     app.run();
-
-//     return 0;
-// }
-
-#include "Scripts.h"
+#include "gui/App.h"
 
 int main() {
-    RunMonteCarloTests();
+    App app;
+
+    if (!app.init()) {
+        return -1;
+    }
+
+    app.run();
+
     return 0;
 }
+
+// #include "Scripts.h"
+
+// int main() {
+//     RunMonteCarloTests();
+//     return 0;
+// }
