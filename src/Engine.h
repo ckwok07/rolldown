@@ -8,6 +8,7 @@
 class Engine {
 public:
     Engine();
+    Engine(unsigned int seed);
     ~Engine();
 
     bool init();
@@ -16,6 +17,7 @@ public:
     // setup
     // init game state
     void initGameState(SetId set);
+    void initGameState(SetId set, int gold, int level);
     // init pool
     void initChampPool();
     // init shop

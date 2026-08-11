@@ -10,6 +10,10 @@ Engine::Engine() {
     rng = mt19937(random_device{}());
 }
 
+Engine::Engine(unsigned int seed) {
+    rng = mt19937(seed);
+}
+
 Engine::~Engine() {
     shutdown();
 }
@@ -38,6 +42,28 @@ void Engine::initGameState(SetId set) {
 
     gamestate.gold = 500;
     gamestate.level = 8;
+    gamestate.time = 30.0;
+    gamestate.stage = 2;
+    initChampPool();
+    initShop();
+}
+
+// secondary initgamestate
+
+void Engine::initGameState(SetId set, int gold, int level) {
+    gamestate = GameState{};
+    
+    gamestate.activeSet = set;
+    if (set == SetId::Set17) {
+        gamestate.activeChampions = &Set17::ALL_CHAMPIONS;
+        gamestate.setState = Set17State{};
+    } else {
+        gamestate.activeChampions = &Set18::ALL_CHAMPIONS;
+        gamestate.setState = Set18State{};
+    }
+
+    gamestate.gold = gold;
+    gamestate.level = level;
     gamestate.time = 30.0;
     gamestate.stage = 2;
     initChampPool();
