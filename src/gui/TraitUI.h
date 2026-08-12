@@ -21,4 +21,6 @@ public:
     Rectangle TraitBarRect();
     void DrawTraitHexs(Engine& engine);
     void DrawTraits(Engine& engine);
+
+    void DrawTraitsVisuals();
 };

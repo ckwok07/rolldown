@@ -38,6 +38,18 @@ static Color CostTierColor(int cost) {
     }
 }
 
+
+static pair<Color,Color> ShopTierColor(int cost) {
+    switch (cost) {
+        case 1: return {Color{29, 37, 38, 255}, Color{ 35,48,58, 255 }}; // grey
+        case 2: return {Color{51, 68, 64, 255}, Color{18, 92, 51, 255 }}; // green
+        case 3: return {Color{38, 56, 67, 255}, Color{27, 85, 124, 255}}; // blue
+        case 4: return {Color{78, 27, 57, 255}, Color{ 160, 20, 138, 255}}; // purple
+        case 5: return {Color{121, 97,50, 255}, Color{ 191,126, 20, 255 }}; // gold
+        default: return {BLACK, DARKGRAY};
+    }
+}
+
 Texture2D* ShopUI::GetChampionSplash(const std::string& championName) {
     if (championName.empty()) {
         return nullptr;
@@ -128,20 +140,31 @@ void ShopUI::DrawTextureCover( Texture2D texture, Rectangle destination, Color t
     DrawTexturePro( texture, source, destination, { 0.0f, 0.0f }, 0.0f, tint);
 }
 
-void ShopUI::DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, bool highlighted, bool sourceHidden) {
-    float border = 3.0f;
+void ShopUI::DrawShopIcon(Rectangle rect, Champion& champion, bool highlighted, bool sourceHidden, bool samechamps) {
+    // card boder
+    float cardBorder = 10.0f;
+    DrawRectangleLinesEx(rect, cardBorder, BLACK);
+
+    float border = 2.5f;
     float infoHeight = rect.height * 0.18f;
 
     Rectangle innerRect = { rect.x + border, rect.y + border, rect.width - border * 2.0f, rect.height - border * 2.0f};
 
     // spash art rectangle
+    float splashBorder = 4.0f;
     Rectangle artRect = {innerRect.x, innerRect.y, innerRect.width, innerRect.height - infoHeight};
+
+    // splash out black ouline
+    Rectangle splashRect = {artRect.x - splashBorder,artRect.y - splashBorder,artRect.width + splashBorder * 2.0f,artRect.height + splashBorder * 2.0f};
 
     // name rectangle
     Rectangle infoRect = {innerRect.x, artRect.y + artRect.height, innerRect.width, infoHeight};
 
     if (champion.id != 0 && !sourceHidden) {
         Texture2D* splash = GetChampionSplash(champion.name);
+
+        DrawRectangleRec(splashRect, BLACK);
+        DrawRectangleGradientEx(rect, ShopTierColor(champion.cost).first, ShopTierColor(champion.cost).first, ShopTierColor(champion.cost).second, ShopTierColor(champion.cost).second);
 
         if (splash != nullptr) {
             DrawTextureCover(*splash, artRect, WHITE);
@@ -167,7 +190,7 @@ void ShopUI::DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, b
             DrawTextEx(traitFont, traitName.c_str(), {traitX, y * 1.00f}, traitFontSize, 0.5f, WHITE);
         }
 
-        DrawRectangleRec(infoRect,tierColor);
+        DrawRectangleGradientEx(infoRect, ShopTierColor(champion.cost).first, ShopTierColor(champion.cost).first, ShopTierColor(champion.cost).second, ShopTierColor(champion.cost).second);
 
         int fontSize = (int)(infoRect.height * 0.60f);
         int textY = (int)(infoRect.y + (infoRect.height - fontSize)/ 1.5);
@@ -183,12 +206,21 @@ void ShopUI::DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, b
         DrawTextEx(traitFont, costText, {infoRect.x + infoRect.width - costSize.x - 6.0f, infoRect.y + (infoRect.height - costSize.y) / 2.0f + 1.0f}, 18, 1.0f, WHITE);
     }
 
+    if (samechamps) {
+        DrawRectangleRec(rect, Fade(WHITE, 0.25f));
+    }
+
     if (champion.id != 0 && !sourceHidden) {
         if (highlighted) {
             DrawRectangleRec(rect, Fade(WHITE, 0.25f));
         }
+        DrawLineEx({infoRect.x, infoRect.y + 2.0f}, {infoRect.x + infoRect.width, infoRect.y}, 2.0f, Fade(WHITE, 0.07f));
+        DrawRectangleLinesEx(rect, 2.0f, Fade(WHITE, 0.07f));
+    }
 
-        DrawRectangleLinesEx(rect, 3.0f, tierColor);
+    if (champion.cost == 5 && !sourceHidden) {
+        DrawRectangleLinesEx({rect.x - 2.0f, rect.y - 2.0f, rect.width + 4.0f, rect.height + 4.0f}, 2.0f, Fade({209,194,141,255}, 0.10f));
+        DrawRectangleLinesEx({rect.x - 1.0f, rect.y - 1.0f, rect.width + 2.0f, rect.height + 2.0f}, 2.0f, Fade({209,194,141,255}, 0.20f));
     }
 }
 
@@ -560,7 +592,7 @@ void ShopUI::DrawShop(Engine& engine, int hoveredShop, bool hoverXp, bool hoverR
                             dragState.source.zone == Zone::Shop &&
                             dragState.source.index == i;
 
-        DrawShopIcon(rect, champion, tierColor, i == hoveredShop, sourceHidden);
+        DrawShopIcon(rect, champion, i == hoveredShop, sourceHidden, engine.gamestate.shopSameChampion[i]);
     }
 
     if (dragState.phase == DragPhase::Dragging && dragState.payload == DragPayload::Champion && dragState.source.zone == Zone::Shop) {
@@ -571,7 +603,7 @@ void ShopUI::DrawShop(Engine& engine, int hoveredShop, bool hoverXp, bool hoverR
         Champion& champion = shop[dragState.source.index];
         Color tierColor = CostTierColor(champion.cost);
 
-        DrawShopIcon(ghost, champion, tierColor, true, false);
+        DrawShopIcon(ghost, champion, true, false, false);
     }
 
     if (dragState.phase == DragPhase::Dragging &&

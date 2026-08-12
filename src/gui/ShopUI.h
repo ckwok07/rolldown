@@ -19,7 +19,7 @@ public:
 
     Texture2D* GetChampionSplash(const std::string& championName);
     void DrawTextureCover(Texture2D texture, Rectangle destination, Color tint = WHITE);
-    void DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, bool highlighted, bool sourceHidden);
+    void DrawShopIcon(Rectangle rect, Champion& champion, bool highlighted, bool sourceHidden, bool samechamp);
 
     Rectangle ShopSlotRect(int i);
     void DrawShopTrapezoid();

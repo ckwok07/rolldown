@@ -603,6 +603,11 @@ void Engine::updateGamestate() {
         });
 
     gamestate.activeTraits = sorted;
+
+    for (int i = 0; i < 5; i++) {
+        gamestate.shopSameChampion[i] = highlight(gamestate.shop[i]);
+        gamestate.shopStarUppable[i] = wouldStarUp(gamestate.shop[i]);
+    }
 }
 
 void Engine::checkStarUp() {

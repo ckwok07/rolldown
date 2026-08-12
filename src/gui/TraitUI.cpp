@@ -149,4 +149,18 @@ void TraitUI::DrawTraits(Engine& engine) {
 
     DrawRectangleLinesEx(bar, 2.0f, SKYBLUE);
     DrawTraitHexs(engine);
+    DrawTraitsVisuals();
+}
+
+void TraitUI::DrawTraitsVisuals() {
+    Rectangle rect = TraitBarRect();
+
+    Rectangle bar = {rect.x, rect.y + rect.height * 0.05f, rect.width * 0.99f, rect.height * 0.90f};
+    DrawRectangleRec(bar, Fade(WHITE, 0.50f));
+
+    Rectangle upperrect = {rect.x, rect.y, rect.width * 0.60f, rect.height * 0.05f};
+    DrawRectangleRec(upperrect, Fade(WHITE, 0.48f));
+
+    Rectangle lowerrect = {rect.x, rect.y + bar.height + rect.height * 0.05f, rect.width * 0.60f, rect.height * 0.05f};
+    DrawRectangleRec(lowerrect, Fade(WHITE, 0.48f));
 }
