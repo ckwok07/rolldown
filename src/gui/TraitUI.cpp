@@ -147,20 +147,59 @@ void TraitUI::DrawTraitHexs(Engine& engine) {
 void TraitUI::DrawTraits(Engine& engine) {
     Rectangle bar = TraitBarRect();
 
-    DrawRectangleLinesEx(bar, 2.0f, SKYBLUE);
-    DrawTraitHexs(engine);
+    // DrawRectangleLinesEx(bar, 2.0f, SKYBLUE);
     DrawTraitsVisuals();
+    DrawTraitHexs(engine);
+
 }
 
 void TraitUI::DrawTraitsVisuals() {
     Rectangle rect = TraitBarRect();
 
     Rectangle bar = {rect.x, rect.y + rect.height * 0.05f, rect.width * 0.99f, rect.height * 0.90f};
-    DrawRectangleRec(bar, Fade(WHITE, 0.50f));
-
     Rectangle upperrect = {rect.x, rect.y, rect.width * 0.60f, rect.height * 0.05f};
-    DrawRectangleRec(upperrect, Fade(WHITE, 0.48f));
-
     Rectangle lowerrect = {rect.x, rect.y + bar.height + rect.height * 0.05f, rect.width * 0.60f, rect.height * 0.05f};
-    DrawRectangleRec(lowerrect, Fade(WHITE, 0.48f));
+
+    auto DrawLayer = [&](float inset, Color color) {
+        float slope = (bar.y - upperrect.y) / ((bar.x + bar.width) - (upperrect.x + upperrect.width));
+        float offset = inset * sqrtf(1.0f + slope * slope);
+
+        float topY = upperrect.y + inset;
+        float rightX = bar.x + bar.width - inset;
+        float lineB = upperrect.y - slope * (upperrect.x + upperrect.width) + offset;
+
+        float joinX = (topY - lineB) / slope;
+        float joinY = slope * rightX + lineB;
+
+        float bottomY = lowerrect.y + lowerrect.height - inset;
+        float bottomJoinY = rect.y + rect.height - (joinY - rect.y);
+
+        Rectangle innerBar = {bar.x, joinY, rightX - bar.x, bottomJoinY - joinY};
+        Rectangle innerUpperrect = {upperrect.x, topY, joinX - upperrect.x, joinY - topY};
+        Rectangle innerLowerrect = {lowerrect.x, bottomJoinY, joinX - lowerrect.x, bottomY - bottomJoinY};
+
+        DrawRectangleRec(innerBar, color);
+        DrawRectangleRec(innerUpperrect, color);
+        DrawRectangleRec(innerLowerrect, color);
+
+        DrawTriangle({joinX, topY}, {joinX, joinY}, {rightX, joinY}, color);
+        DrawTriangle({joinX, bottomJoinY}, {joinX, bottomY}, {rightX, bottomJoinY}, color);
+    };
+
+    DrawLayer(0.0f, Fade(BLACK, 0.75f));
+    DrawLayer(1.0f, {111, 93, 57, 255});
+    DrawLayer(4.5f, Fade(BLACK, 0.75f));
+    DrawLayer(6.0f, {20, 31, 32, 255});
+    DrawLayer(9.5f, Fade({42, 74, 72, 255}, 0.65f));
+    DrawLayer(11.5f, {20, 31, 32, 255});
+
+    float gap = bar.height * 0.030f;
+    float squareSize = bar.width * 0.42f;
+    float y = bar.y + bar.height * 0.028f;
+
+    for (int i = 0; i < 10; i++) {
+        Rectangle square = {bar.x + bar.width * 0.15f, y, squareSize, squareSize};
+        DrawRectangleRec(square, BLACK);
+        y = y + squareSize + gap;
+    }
 }

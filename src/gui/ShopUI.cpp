@@ -217,11 +217,6 @@ void ShopUI::DrawShopIcon(Rectangle rect, Champion& champion, bool highlighted, 
         DrawLineEx({infoRect.x, infoRect.y + 2.0f}, {infoRect.x + infoRect.width, infoRect.y}, 2.0f, Fade(WHITE, 0.07f));
         DrawRectangleLinesEx(rect, 2.0f, Fade(WHITE, 0.07f));
     }
-
-    if (champion.cost == 5 && !sourceHidden) {
-        DrawRectangleLinesEx({rect.x - 2.0f, rect.y - 2.0f, rect.width + 4.0f, rect.height + 4.0f}, 2.0f, Fade({209,194,141,255}, 0.10f));
-        DrawRectangleLinesEx({rect.x - 1.0f, rect.y - 1.0f, rect.width + 2.0f, rect.height + 2.0f}, 2.0f, Fade({209,194,141,255}, 0.20f));
-    }
 }
 
 Rectangle ShopUI::ShopBarRect() {
