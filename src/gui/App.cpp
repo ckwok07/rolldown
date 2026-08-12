@@ -374,7 +374,7 @@ void App::HandleChampionDrop(const SlotRef& target) {
     }
 }
 
-void App::HandleDragRelease(int hoveredBench, int hoveredRow, int hoveredCol) {
+void App::HandleDragRelease(int hoveredBench, int hoveredRow, int hoveredCol, int hoveredItem) {
     if (drag.GetState().phase == DragPhase::Idle) return;
     if (!IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) return;
 
@@ -382,6 +382,14 @@ void App::HandleDragRelease(int hoveredBench, int hoveredRow, int hoveredCol) {
 
     if (drag.GetState().payload == DragPayload::Champion) {
         HandleChampionDrop(target);
+    }
+
+    if (drag.GetState().payload == DragPayload::Item) {
+        const SlotRef source = drag.GetState().source;
+
+        if (source.zone == Zone::Inventory && hoveredItem != -1 && hoveredItem < engine.gamestate.items.size() && hoveredItem != source.index) {
+            std::swap(engine.gamestate.items[source.index], engine.gamestate.items[hoveredItem]);
+        }
     }
 
     drag.ResetDrag();
@@ -518,7 +526,7 @@ void App::run() {
         }
         
         HandleDragPress(hoveredShop, hoveredBench, hoveredRow, hoveredCol);
-        HandleDragRelease(hoveredBench, hoveredRow, hoveredCol);
+        HandleDragRelease(hoveredBench, hoveredRow, hoveredCol, hoveredItem);
         
         
         BeginDrawing();

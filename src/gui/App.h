@@ -40,7 +40,7 @@ private:
     TraitUI traits;
 
     void HandleDragPress(int hoveredShop, int hoveredBench, int hoveredRow, int hoveredCol);
-    void HandleDragRelease(int hoveredBench, int hoveredRow, int hoveredCol);
+    void HandleDragRelease(int hoveredBench, int hoveredRow, int hoveredCol, int hoveredItem);
     void HandleChampionDrop(const SlotRef& target);
 
     SlotRef GetDropTarget(int hoveredBench, int hoveredRow, int hoveredCol);
