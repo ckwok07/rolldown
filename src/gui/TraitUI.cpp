@@ -93,8 +93,11 @@ void TraitUI::DrawTraitHexs(Engine& engine) {
         float thresholdW = MeasureTextEx(traitFont, thresholds.c_str(), 13.0f, 0.5f).x;
         float textW = std::max(nameW, thresholdW);
 
-        DrawRectangle((int)cx, (int)(cy - rowH / 2.0f), (int)((textX - cx) + textW + pad), (int)rowH, Fade(DARKGRAY, 0.6f));
-        DrawRectangle((int)numberX, (int)(cy - numberH / 2.0f), (int)numberW, (int)numberH, Fade(WHITE, 0.5f));
+        Rectangle rowRect = {(float)cx, cy - rowH / 2.0f, (textX - cx) + textW + pad, rowH};
+        DrawRectangleRounded(rowRect, 0.18f, 8, Fade(DARKGRAY, 0.6f));
+
+        Rectangle numberRect = {numberX, cy - numberH / 2.0f, numberW, numberH};
+        DrawRectangleRounded(numberRect, 0.18f, 8, Fade(WHITE, 0.5f));
 
         const char* numberText = TextFormat("%d", traitCount);
         Vector2 numberSize = MeasureTextEx(traitFont, numberText, 20.0f, 0.5f);
@@ -144,13 +147,14 @@ void TraitUI::DrawTraitHexs(Engine& engine) {
     }
 }
 
-void TraitUI::DrawTraits(Engine& engine) {
+void TraitUI::DrawTraits(Engine& engine, const Drag& drag) {
     Rectangle bar = TraitBarRect();
 
     // DrawRectangleLinesEx(bar, 2.0f, SKYBLUE);
     DrawTraitsVisuals();
     DrawTraitHexs(engine);
-
+    DrawItems(engine.gamestate.items, drag);
+    DrawDraggedItem(engine.gamestate.items, drag);
 }
 
 void TraitUI::DrawTraitsVisuals() {
@@ -198,8 +202,127 @@ void TraitUI::DrawTraitsVisuals() {
     float y = bar.y + bar.height * 0.028f;
 
     for (int i = 0; i < 10; i++) {
-        Rectangle square = {bar.x + bar.width * 0.15f, y, squareSize, squareSize};
+        Rectangle square = {bar.x + bar.width * 0.13f, y, squareSize, squareSize};
         DrawRectangleRec(square, BLACK);
         y = y + squareSize + gap;
     }
+}
+
+void TraitUI::DrawItems(const vector<Item>& items, const Drag& drag) {
+    Rectangle rect = TraitBarRect();
+
+    Rectangle bar = {rect.x, rect.y + rect.height * 0.05f, rect.width * 0.99f, rect.height * 0.90f};
+    Rectangle upperrect = {rect.x, rect.y, rect.width * 0.60f, rect.height * 0.05f};
+    Rectangle lowerrect = {rect.x, rect.y + bar.height + rect.height * 0.05f, rect.width * 0.60f, rect.height * 0.05f};
+
+    float gap = bar.height * 0.030f;
+    float squareSize = bar.width * 0.42f;
+    float y = bar.y + bar.height * 0.028f;
+
+    for (int i = 0; i < 10; i++) {
+        Rectangle square = {bar.x + bar.width * 0.13f, y, squareSize, squareSize};
+
+        const DragState& state = drag.GetState();
+        if (i < items.size() && !(state.phase == DragPhase::Dragging && state.payload == DragPayload::Item && state.source.zone == Zone::Inventory && state.source.index == i)) {
+            Texture2D* texture = GetItemTexture(items[i]);
+
+            if (texture != nullptr) {
+                DrawRectangleRec(square, {111, 93, 57, 255});
+                Rectangle itemRect = {square.x + square.width * 0.025f, square.y + square.height * 0.025f, square.width * 0.95f, square.height * 0.95f};
+                Rectangle source = {0, 0, (float)texture->width, (float)texture->height};
+                DrawTexturePro(*texture, source, itemRect, {0, 0}, 0.0f, WHITE);
+            }
+        }
+        y = y + squareSize + gap;
+    }
+}
+
+string TraitUI::GetItemName(const Item& item) {
+    if (holds_alternative<int>(item)) {
+        int id = get<int>(item);
+        auto it = Set18::itemComponents.find(id);
+        return it != Set18::itemComponents.end() ? it->second : "";
+    }
+
+    pair<int, int> ids = get<pair<int, int>>(item);
+    auto it = Set18::completedItems.find(ids);
+    return it != Set18::completedItems.end() ? it->second : "";
+}
+
+Texture2D* TraitUI::GetItemTexture(const Item& item) {
+    string itemName = GetItemName(item);
+    if (itemName.empty()) return nullptr;
+
+    auto existing = itemTextures.find(itemName);
+
+    if (existing != itemTextures.end()) {
+        return existing->second.id != 0 ? &existing->second : nullptr;
+    }
+
+    string assetName = itemName;
+
+    for (char& ch : assetName) {
+        if (ch == ' ') ch = '_';
+    }
+
+    string path = "assets/Set18/items/120px-" + assetName + "_TFT_item.png";
+
+    if (!FileExists(path.c_str())) {
+        TraceLog(LOG_WARNING, "Missing item texture: %s", path.c_str());
+        itemTextures[itemName] = Texture2D{};
+        return nullptr;
+    }
+
+    Texture2D texture = LoadTexture(path.c_str());
+    SetTextureFilter(texture, TEXTURE_FILTER_BILINEAR);
+
+    itemTextures[itemName] = texture;
+    return &itemTextures[itemName];
+}
+
+int TraitUI::GetHoveredItemSlot(Vector2 mousePos) {
+    Rectangle rect = TraitBarRect();
+
+    Rectangle bar = {rect.x, rect.y + rect.height * 0.05f, rect.width * 0.99f, rect.height * 0.90f};
+
+    float gap = bar.height * 0.030f;
+    float squareSize = bar.width * 0.42f;
+    float y = bar.y + bar.height * 0.028f;
+
+    for (int i = 0; i < 10; i++) {
+        Rectangle square = {bar.x + bar.width * 0.13f, y, squareSize, squareSize};
+
+        if (CheckCollisionPointRec(mousePos, square)) {
+            return i;
+        }
+
+        y = y + squareSize + gap;
+    }
+
+    return -1;
+}
+
+void TraitUI::DrawDraggedItem(const vector<Item>& items, const Drag& drag) {
+    const DragState& state = drag.GetState();
+
+    if (state.phase != DragPhase::Dragging || state.payload != DragPayload::Item) return;
+    if (state.source.index < 0 || state.source.index >= items.size()) return;
+
+    Texture2D* texture = GetItemTexture(items[state.source.index]);
+    if (texture == nullptr) return;
+
+    Rectangle rect = TraitBarRect();
+    Rectangle bar = {rect.x, rect.y + rect.height * 0.05f, rect.width * 0.99f, rect.height * 0.90f};
+
+    float squareSize = bar.width * 0.42f;
+    Vector2 mouse = GetMousePosition();
+
+    Rectangle square = {mouse.x - squareSize / 2.0f, mouse.y - squareSize / 2.0f, squareSize, squareSize};
+
+    DrawRectangleRec(square, {111, 93, 57, 255});
+
+    Rectangle itemRect = {square.x + square.width * 0.025f, square.y + square.height * 0.025f, square.width * 0.95f, square.height * 0.95f};
+    Rectangle source = {0, 0, (float)texture->width, (float)texture->height};
+
+    DrawTexturePro(*texture, source, itemRect, {0, 0}, 0.0f, WHITE);
 }

@@ -201,6 +201,8 @@ namespace Set18 {
 
   extern const unordered_map<int, pair<vector<int>, vector<int>>> ALL_TRAITS;
   extern const unordered_map<int, string> TRAIT_ID_TO_NAME;
+  extern const unordered_map<int, string> itemComponents;
+  extern const map<pair<int,int>, string> completedItems;
 
 //   extern const trait Adaptor;
 //   extern const trait ApexPredator;

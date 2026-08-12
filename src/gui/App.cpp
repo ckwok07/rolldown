@@ -468,6 +468,7 @@ void App::run() {
         int hoveredCol = -1;
         int hoveredBench = -1;
         int hoveredShop = -1;
+        int hoveredItem = traits.GetHoveredItemSlot(GetMousePosition());
 
         bool hoverXp = CheckCollisionPointRec(GetMousePosition(), shop.ShopXpRect());
         bool hoverReroll = CheckCollisionPointRec(GetMousePosition(), shop.ShopRerollRect());
@@ -804,7 +805,7 @@ void App::run() {
         // Rectangle bar = TraitBarRect();
         // DrawTraitHexs();
 
-        traits.DrawTraits(engine);
+        traits.DrawTraits(engine, drag);
 
         // xp and reroll mechanics
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoverXp) {
@@ -817,6 +818,12 @@ void App::run() {
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoverLock) {
             engine.gamestate.shoplocked = !engine.gamestate.shoplocked;
         }
+
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoveredItem != -1 && hoveredItem < engine.gamestate.items.size()) {
+            SlotRef source = {Zone::Inventory, hoveredItem, -1, -1};
+            drag.BeginDrag(DragPayload::Item, source, {0, 0});
+        }
+
         if (IsKeyPressed(KEY_D)) engine.roll();
         if (IsKeyPressed(KEY_F)) engine.levelup();
 

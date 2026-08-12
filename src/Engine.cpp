@@ -40,6 +40,12 @@ void Engine::initGameState(SetId set) {
         gamestate.setState = Set18State{};
     }
 
+    //
+    gamestate.items.push_back(1);
+    gamestate.items.push_back(2);
+    gamestate.items.push_back(3);
+    //
+
     gamestate.gold = 500;
     gamestate.level = 8;
     gamestate.time = 30.0;
