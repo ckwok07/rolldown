@@ -7,6 +7,7 @@
 #include "Drag.h"
 #include "ShopUI.h"
 #include "TraitUI.h"
+#include "BoardUI.h"
 
 class App
 {
@@ -15,21 +16,6 @@ private:
     Engine engine;
 
     Camera3D camera = { 0 };
-    // std::unordered_map<std::string, Texture2D> splashTextures;
-
-    // Texture2D* GetChampionSplash(const std::string& championName);
-
-    // void DrawTextureCover(Texture2D texture, Rectangle destination, Color tint = WHITE);
-
-    // void DrawShopIcon(Rectangle rect, Champion& champion, Color tierColor, int i,  bool highlighted);
-
-    std::unordered_map<int, Model> champModels;
-    std::unordered_map<int, ModelAnimation*> champAnims;
-    std::unordered_map<int, int> champAnimCounts;
-    std::unordered_map<int, float> champScales;
-    std::unordered_map<int, float> champYOffsets;
-    std::unordered_map<int, float> champAnimFrame;
-    std::unordered_map<int, float> champAnimDir;
 
     // dragging stuff
     Drag drag;
@@ -38,6 +24,9 @@ private:
 
     // trait
     TraitUI traits;
+
+    // board
+    BoardUI board;
 
     void HandleDragPress(int hoveredShop, int hoveredBench, int hoveredRow, int hoveredCol);
     void HandleDragRelease(int hoveredBench, int hoveredRow, int hoveredCol, int hoveredItem);
@@ -57,17 +46,7 @@ public:
     float drawR = r * 0.90f; 
     float squareSide = r * 1.2f;
 
-    Vector3 HexCenter(int row, int col);
-    Vector3 BenchCenter(int i);
-    // Rectangle ShopSlotRect(int i);
-    // void DrawShopTrapezoid();
-    // Rectangle ShopBarRect();
-    Rectangle TraitBarRect();
     void DrawTraitHexs();
-
-    // Rectangle ShopXpRect();
-    // Rectangle ShopRerollRect();
-
 
     bool init();
     void run();

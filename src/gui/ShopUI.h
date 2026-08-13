@@ -1,3 +1,4 @@
+#pragma once
 #include "raylib.h"
 #include <unordered_map>
 #include "../Engine.h"
