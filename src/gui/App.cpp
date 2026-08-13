@@ -389,7 +389,9 @@ void App::HandleDragRelease(int hoveredBench, int hoveredRow, int hoveredCol, in
 
         if (source.zone == Zone::Inventory && hoveredItem != -1 && hoveredItem < engine.gamestate.items.size() && hoveredItem != source.index) {
             if (drag.GetState().holdReady) {
-                engine.combine(source.index, hoveredItem);
+                if (!engine.combine(source.index, hoveredItem)) {
+                    std::swap(engine.gamestate.items[source.index], engine.gamestate.items[hoveredItem]);
+                }
             } else {
                 std::swap(engine.gamestate.items[source.index], engine.gamestate.items[hoveredItem]);
             }

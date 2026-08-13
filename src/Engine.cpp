@@ -436,24 +436,24 @@ void Engine::slamBench(int index, int position) {
     gamestate.items.erase(gamestate.items.begin() + index);
 }
 // combine items
-void Engine::combine(int index1, int index2) {
-    if (holds_alternative<int>(gamestate.items[index1]) && get<int>(gamestate.items[index1]) == -1) return;
-    if (holds_alternative<int>(gamestate.items[index2]) && get<int>(gamestate.items[index2]) == -1) return;
-
-    // both must be components
-    if (!holds_alternative<int>(gamestate.items[index1])) return;
-    if (!holds_alternative<int>(gamestate.items[index2])) return;
+bool Engine::combine(int index1, int index2) {
+    if (!holds_alternative<int>(gamestate.items[index1])) return false;
+    if (!holds_alternative<int>(gamestate.items[index2])) return false;
 
     int a = get<int>(gamestate.items[index1]);
     int b = get<int>(gamestate.items[index2]);
+
+    if (a == -1 || b == -1) return false;
     if (a > b) swap(a, b);
 
     pair<int,int> combined = {a, b};
-    if (completedItems.find(combined) == completedItems.end()) return;
+    if (completedItems.find(combined) == completedItems.end()) return false;
 
-    gamestate.items[index1] = combined;
-    gamestate.items.erase(gamestate.items.begin() + index2);
+    gamestate.items[index2] = combined;
+    gamestate.items.erase(gamestate.items.begin() + index1);
     gamestate.items.push_back(-1);
+
+    return true;
 }
 
 // use reforger

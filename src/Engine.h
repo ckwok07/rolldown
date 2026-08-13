@@ -61,7 +61,7 @@ public:
     void slamBoard(int index, pair<int,int> position);
     void slamBench(int index, int position);
     // combine items
-    void combine(int index1, int index2);
+    bool combine(int index1, int index2);
     // use reforger
     void reforgerBench(int reforger, int index);
     void reforgerBoard(int reforger, pair<int,int> index);
