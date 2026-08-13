@@ -41,9 +41,15 @@ void Engine::initGameState(SetId set) {
     }
 
     //
-    gamestate.items.push_back(1);
-    gamestate.items.push_back(2);
+    gamestate.items.push_back(10);
+    gamestate.items.push_back(6);
     gamestate.items.push_back(3);
+    gamestate.items.push_back(10);
+    gamestate.items.push_back(6);
+    gamestate.items.push_back(10);
+    gamestate.items.push_back(6);
+    gamestate.items.push_back(10);
+    gamestate.items.push_back(6);
     //
 
     gamestate.gold = 500;
@@ -446,8 +452,10 @@ void Engine::combine(int index1, int index2) {
     if (completedItems.find(combined) == completedItems.end()) return;
 
     gamestate.items[index1] = combined;
-    gamestate.items[index2] = -1;
+    gamestate.items.erase(gamestate.items.begin() + index2);
+    gamestate.items.push_back(-1);
 }
+
 // use reforger
 void Engine::reforgerBench(int reforger, int index) {
     if (gamestate.bench[index] == nullChamp) return;

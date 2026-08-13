@@ -388,7 +388,11 @@ void App::HandleDragRelease(int hoveredBench, int hoveredRow, int hoveredCol, in
         const SlotRef source = drag.GetState().source;
 
         if (source.zone == Zone::Inventory && hoveredItem != -1 && hoveredItem < engine.gamestate.items.size() && hoveredItem != source.index) {
-            std::swap(engine.gamestate.items[source.index], engine.gamestate.items[hoveredItem]);
+            if (drag.GetState().holdReady) {
+                engine.combine(source.index, hoveredItem);
+            } else {
+                std::swap(engine.gamestate.items[source.index], engine.gamestate.items[hoveredItem]);
+            }
         }
     }
 
@@ -526,6 +530,15 @@ void App::run() {
         }
         
         HandleDragPress(hoveredShop, hoveredBench, hoveredRow, hoveredCol);
+        if (drag.GetState().phase == DragPhase::Dragging && drag.GetState().payload == DragPayload::Item) {
+            SlotRef holdTarget = {};
+
+            if (hoveredItem != -1 && hoveredItem < engine.gamestate.items.size() && hoveredItem != drag.GetState().source.index) {
+                holdTarget = {Zone::Inventory, hoveredItem, -1, -1};
+            }
+
+            drag.UpdateHold(holdTarget, 1.0f);
+        }
         HandleDragRelease(hoveredBench, hoveredRow, hoveredCol, hoveredItem);
         
         
@@ -875,6 +888,7 @@ void App::run() {
         line(TextFormat("boardUnits:%d locked:%d", gs.boardUnitCount, gs.shoplocked));
         line(TextFormat("hover row:%d col:%d bench:%d shop:%d", hoveredRow, hoveredCol, hoveredBench, hoveredShop));
         line(TextFormat("drag state:%d zone:%d index:%d row:%d col:%d", (int)drag.GetState().phase, (int)drag.GetState().source.zone, drag.GetState().source.index, drag.GetState().source.row, drag.GetState().source.col));
+        line(TextFormat("hold time: %.2f ready: %d target: %d", drag.GetState().holdTime, drag.GetState().holdReady, drag.GetState().holdTarget.index));
 
         // for (int i = 0; i < 5; i++) {
         //     Champion& c = gs.shop[i];

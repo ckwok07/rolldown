@@ -47,3 +47,26 @@ bool Drag::IsDraggedSource(const SlotRef& slot) const {
 const DragState& Drag::GetState() const {
     return state;
 }
+
+void Drag::UpdateHold(const SlotRef& target, float requiredTime) {
+    if (target.zone == Zone::None) {
+        state.holdTarget = {};
+        state.holdTime = 0.0f;
+        state.holdReady = false;
+        return;
+    }
+
+    bool sameTarget = state.holdTarget.zone == target.zone &&
+                      state.holdTarget.index == target.index &&
+                      state.holdTarget.row == target.row &&
+                      state.holdTarget.col == target.col;
+
+    if (!sameTarget) {
+        state.holdTarget = target;
+        state.holdTime = 0.0f;
+        state.holdReady = false;
+    }
+
+    state.holdTime += GetFrameTime();
+    state.holdReady = state.holdTime >= requiredTime;
+}

@@ -76,4 +76,6 @@ public:
     float getDragDistance() const;
 
     const DragState& GetState() const;
+
+    void UpdateHold(const SlotRef& target, float requiredTime);
 };

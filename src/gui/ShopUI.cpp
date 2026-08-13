@@ -355,15 +355,19 @@ void ShopUI::DrawLock(bool locked) {
     float inset = lock.height * 0.14f;
     Rectangle rect = {lock.x + inset, lock.y + inset, lock.width - inset * 2.0f, lock.height - inset};
 
-    Color topColor = {28, 66, 66, 255};
-    Color bottomColor = {22, 35, 35, 255};
+    Color topColor = (!locked) ? Color{28, 66, 66, 255} : Color{74, 178, 190, 255};
+    Color bottomColor = (!locked) ? Color{22, 35, 35, 255} : Color{30,90,76,255};
 
     DrawRectangleGradientEx(rect, topColor, bottomColor, bottomColor, topColor);
 
     inset = rect.height * 0.06f;
     Rectangle innerect = {rect.x + inset, rect.y + inset, rect.width - inset * 2.0f, rect.height - inset * 2.0f};
 
-    DrawRectangleRec(innerect, {14, 20, 23, 255});
+    if (locked) {
+        DrawRectangleGradientEx(innerect, {22, 35, 35, 255}, {28, 66, 66, 255}, {28, 66, 66, 255}, {22, 35, 35, 255});
+    } else {
+        DrawRectangleRec(innerect, {14, 20, 23, 255});
+    }
 }
 
 #include "rlgl.h"
