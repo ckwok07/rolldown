@@ -208,6 +208,7 @@ namespace Set18 {
   extern const unordered_map<int, float> scales;
   extern const unordered_map<int, Vector3> hitboxScales;
   extern const unordered_map<int, Vector3> hitboxOffsets;
+  extern const unordered_map<int, float> groundOffsets;
 
 //   extern const trait Adaptor;
 //   extern const trait ApexPredator;

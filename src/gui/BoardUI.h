@@ -25,6 +25,13 @@ private:
 
     unordered_map<int, BoundingBox> champBounds;
 
+    RenderTexture2D outlineMask = {};
+
+    void drawChampionOutline();
+
+
+    Shader outlineShader = {};
+
 public:
     BoardUI(/* args */);
     ~BoardUI();
@@ -38,9 +45,9 @@ public:
 
     void drawHexes(int hoveredRow, int hoveredCol);
     void drawSquares(int hoveredBench);
-    void drawChampions(Engine& engine, const Drag& drag, const Vector3& mousePosition, const Champion* champion);
+    void drawChampions(Engine& engine, const Drag& drag, const Vector3& mousePosition, const Champion* draggedChampion, int hoveredRow, int hoveredCol, int hoveredBench);
 
-    void drawVisuals(Engine& engine, const Drag& drag, const Vector3& mousePosition, int hoveredRow, int hoveredCol, int hoveredBench, const Champion* draggedChampion);
+    void drawVisuals(Engine& engine, const Drag& drag, const Camera3D& camera, const Vector3& mousePosition, int hoveredRow, int hoveredCol, int hoveredBench, const Champion* draggedChampion);
 
     void drawDraggedChampionModel(const Drag& drag, const Vector3& mousePosition, const Champion* champion);
     const Champion* GetDraggedChampion(const Drag& drag, Engine& engine) const;
@@ -49,4 +56,8 @@ public:
     void drawAllChampions();
 
     BoundingBox GetChampionHitbox(int id, const Vector3& pos, float scale) const;
+
+    void drawChampionModel(Model& model, const Vector3& pos, float scale, bool hovered);
+
+    void renderHoveredChampionMask(Engine& engine, const Drag& drag, const Camera3D& camera, const Vector3& mousePosition, int hoveredRow, int hoveredCol, int hoveredBench, const Champion* draggedChampion);
 };

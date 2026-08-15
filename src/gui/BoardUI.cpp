@@ -1,5 +1,6 @@
 #include "BoardUI.h"
 #include <cfloat>
+#include "rlgl.h"
 
 BoardUI::BoardUI(/* args */)
 {
@@ -11,6 +12,9 @@ BoardUI::~BoardUI()
 
 
 void BoardUI::init(SetId set) {
+    outlineMask = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
+    SetTextureFilter(outlineMask.texture, TEXTURE_FILTER_BILINEAR);
+    outlineShader = LoadShader(0, "assets/shaders/outline.fs");
     string prefix;
     string suffix;
 
@@ -66,6 +70,10 @@ void BoardUI::shutdown() {
     for (auto& e : champAnims)  UnloadModelAnimations(e.second, champAnimCounts[e.first]);
     champModels.clear();
     champAnims.clear();
+    if (outlineMask.id != 0) {
+        UnloadRenderTexture(outlineMask);
+        outlineMask = {};
+    }
 }
 
 Vector3 BoardUI::HexCenter(int row, int col) {
@@ -150,85 +158,98 @@ void BoardUI::drawSquares(int hoveredBench) {
     }
 }
 
-void BoardUI::drawChampions(Engine& engine, const Drag& drag, const Vector3& mousePosition, const Champion* draggedChampion) {
+void BoardUI::drawChampions(Engine& engine, const Drag& drag, const Vector3& mousePosition, const Champion* draggedChampion, int hoveredRow, int hoveredCol, int hoveredBench) {
+    for (auto& entry : champModels) {
+        int id = entry.first;
+        Model& model = entry.second;
 
-        for (auto& entry : champModels) {
-            int id = entry.first;
-            Model& model = entry.second;
-            bool present = false;
-            for (int row = 0; row < 4 && !present; row++)
-                for (int col = 0; col < 7; col++)
-                    if (engine.gamestate.board[row][col].id == id) { present = true; break; }
-            for (int i = 0; i < 9 && !present; i++)
-                if (engine.gamestate.bench[i].id == id) { present = true; break; }
+        bool present = false;
 
-            if (!present) continue;
-
-            ModelAnimation* anims = champAnims[id];
-            int count = champAnimCounts[id];
-
-            if (anims != nullptr && count > 0 && anims[0].keyframeCount > 1) {
-                float endFrame = (float)anims[0].keyframeCount - 2.0f;
-                champAnimFrame[id] += GetFrameTime() * 30.0f * champAnimDir[id];
-
-                if (champAnimFrame[id] >= endFrame) {
-                    champAnimFrame[id] = endFrame;
-                    champAnimDir[id] = -1.0f;
-                } else if (champAnimFrame[id] <= 0.0f) {
-                    champAnimFrame[id] = 0.0f;
-                    champAnimDir[id] = 1.0f;
-                }
-
-                UpdateModelAnimation(model, anims[0], (int)champAnimFrame[id]);
-            }
-
-            float scale = champScales[id];
-            float yOff  = champYOffsets[id];
-
-            for (int row = 0; row < 4; row++) {
-                for (int col = 0; col < 7; col++) {
-                    if (engine.gamestate.board[row][col].id == id) {
-                        SlotRef slot = {Zone::Board, -1, row, col};
-
-                        if (drag.IsDraggedSource(slot)) {
-                            continue;
-                        }
-                        Vector3 pos = HexCenter(row, col);
-                        pos.y = yOff;
-
-                        DrawModelEx(model, pos, {0,1,0}, 0.0f, {scale,scale,scale}, WHITE);
-
-                        BoundingBox bounds = champBounds[id];
-
-                        BoundingBox worldBounds = {
-                            {pos.x + bounds.min.x * scale, pos.y + bounds.min.y * scale, pos.z + bounds.min.z * scale},
-                            {pos.x + bounds.max.x * scale, pos.y + bounds.max.y * scale, pos.z + bounds.max.z * scale}
-                        };
-
-                        DrawBoundingBox(worldBounds, RED);
-                        pos.y = yOff;
-                        DrawModelEx(model, pos, {0,1,0}, 0.0f, {scale,scale,scale}, WHITE);
-                    }
-                }
-            }
-
-            for (int i = 0; i < 9; i++) {
-                if (engine.gamestate.bench[i].id == id) {
-                    SlotRef slot = {Zone::Bench, i, -1, -1};
-
-                    if (drag.IsDraggedSource(slot)) {
-                        continue;
-                    }
-                    Vector3 pos = BenchCenter(i);
-                    pos.y = yOff;
-                    DrawModelEx(model, pos, {0,1,0}, 0.0f, {scale,scale,scale}, WHITE);
+        for (int row = 0; row < 4 && !present; row++) {
+            for (int col = 0; col < 7; col++) {
+                if (engine.gamestate.board[row][col].id == id) {
+                    present = true;
+                    break;
                 }
             }
         }
-        drawDraggedChampionModel(drag, mousePosition, draggedChampion);
+
+        for (int i = 0; i < 9 && !present; i++) {
+            if (engine.gamestate.bench[i].id == id) {
+                present = true;
+                break;
+            }
+        }
+
+        if (!present) continue;
+
+        ModelAnimation* anims = champAnims[id];
+        int count = champAnimCounts[id];
+
+        if (anims != nullptr && count > 0 && anims[0].keyframeCount > 1) {
+            float endFrame = (float)anims[0].keyframeCount - 2.0f;
+            champAnimFrame[id] += GetFrameTime() * 30.0f * champAnimDir[id];
+
+            if (champAnimFrame[id] >= endFrame) {
+                champAnimFrame[id] = endFrame;
+                champAnimDir[id] = -1.0f;
+            } else if (champAnimFrame[id] <= 0.0f) {
+                champAnimFrame[id] = 0.0f;
+                champAnimDir[id] = 1.0f;
+            }
+
+            UpdateModelAnimation(model, anims[0], (int)champAnimFrame[id]);
+        }
+
+        float scale = champScales[id];
+        float yOff = champYOffsets[id];
+
+        auto groundIt = Set18::groundOffsets.find(id);
+        if (groundIt != Set18::groundOffsets.end()) {
+            BoundingBox bounds = champBounds[id];
+            float modelHeight = (bounds.max.y - bounds.min.y) * scale;
+            yOff += modelHeight * groundIt->second;
+        }
+
+        for (int row = 0; row < 4; row++) {
+            for (int col = 0; col < 7; col++) {
+                if (engine.gamestate.board[row][col].id != id) continue;
+
+                SlotRef slot = {Zone::Board, -1, row, col};
+                if (drag.IsDraggedSource(slot)) continue;
+
+                Vector3 pos = HexCenter(row, col);
+                pos.y = yOff;
+
+                bool hovered = row == hoveredRow && col == hoveredCol;
+                drawChampionModel(model, pos, scale, hovered);
+            }
+        }
+
+        for (int i = 0; i < 9; i++) {
+            if (engine.gamestate.bench[i].id != id) continue;
+
+            SlotRef slot = {Zone::Bench, i, -1, -1};
+            if (drag.IsDraggedSource(slot)) continue;
+
+            Vector3 pos = BenchCenter(i);
+            pos.y = yOff;
+
+            bool hovered = i == hoveredBench;
+            drawChampionModel(model, pos, scale, hovered);
+        }
+    }
+
+    drawDraggedChampionModel(drag, mousePosition, draggedChampion);
 }
 
-void BoardUI::drawVisuals(Engine& engine, const Drag& drag, const Vector3& mousePosition, int hoveredRow, int hoveredCol, int hoveredBench, const Champion* draggedChampion) {
+void BoardUI::drawVisuals(Engine& engine, const Drag& drag, const Camera3D& camera, const Vector3& mousePosition, int hoveredRow, int hoveredCol, int hoveredBench, const Champion* draggedChampion) {
+    renderHoveredChampionMask(engine, drag, camera, mousePosition, hoveredRow, hoveredCol, hoveredBench, draggedChampion);
+
+    BeginMode3D(camera);
+
+    rlDisableBackfaceCulling();
+
     bool draggingBoardChampion =
         drag.GetState().phase == DragPhase::Dragging &&
         drag.GetState().payload == DragPayload::Champion &&
@@ -239,25 +260,13 @@ void BoardUI::drawVisuals(Engine& engine, const Drag& drag, const Vector3& mouse
         drawSquares(hoveredBench);
     }
 
-    drawChampions(engine, drag, mousePosition, draggedChampion);
-}
+    drawChampions(engine, drag, mousePosition, draggedChampion, hoveredRow, hoveredCol, hoveredBench);
 
-void BoardUI::drawDraggedChampionModel(const Drag& drag, const Vector3& mousePosition, const Champion* champion) {
-    if (drag.GetState().phase != DragPhase::Dragging) return;
-    if (drag.GetState().payload != DragPayload::Champion) return;
-    if (drag.GetState().source.zone != Zone::Bench && drag.GetState().source.zone != Zone::Board) return;
+    rlEnableBackfaceCulling();
 
-    if (champion == nullptr || champion->id == 0) return;
+    EndMode3D();
 
-    auto modelIt = champModels.find(champion->id);
-    if (modelIt == champModels.end()) return;
-
-    Vector3 position = mousePosition;
-
-    float scale = champScales[champion->id];
-    position.y = champYOffsets[champion->id];
-
-    DrawModelEx(modelIt->second, position, {0.0f, 1.0f, 0.0f}, 0.0f, {scale, scale, scale}, WHITE);
+    drawChampionOutline();
 }
 
 SlotRef BoardUI::getHoveredChampion(const Ray& ray, Engine& engine) {
@@ -269,28 +278,17 @@ SlotRef BoardUI::getHoveredChampion(const Ray& ray, Engine& engine) {
             const Champion& champion = engine.gamestate.board[row][col];
             if (champion.id == 0) continue;
 
-            auto modelIt = champModels.find(champion.id);
+            int id = champion.id;
+
+            auto modelIt = champModels.find(id);
             if (modelIt == champModels.end()) continue;
 
-            float scale = champScales[champion.id];
+            float scale = champScales[id];
+
             Vector3 pos = HexCenter(row, col);
-            pos.y = champYOffsets[champion.id];
+            pos.y = champYOffsets[id];
 
-            BoundingBox bounds = champBounds[champion.id];
-
-            BoundingBox worldBounds = {
-                {
-                    pos.x + bounds.min.x * scale,
-                    pos.y + bounds.min.y * scale,
-                    pos.z + bounds.min.z * scale
-                },
-                {
-                    pos.x + bounds.max.x * scale,
-                    pos.y + bounds.max.y * scale,
-                    pos.z + bounds.max.z * scale
-                }
-            };
-
+            BoundingBox worldBounds = GetChampionHitbox(id, pos, scale);
             RayCollision hit = GetRayCollisionBox(ray, worldBounds);
 
             if (hit.hit && hit.distance < closestDistance) {
@@ -304,28 +302,17 @@ SlotRef BoardUI::getHoveredChampion(const Ray& ray, Engine& engine) {
         const Champion& champion = engine.gamestate.bench[i];
         if (champion.id == 0) continue;
 
-        auto modelIt = champModels.find(champion.id);
+        int id = champion.id;
+
+        auto modelIt = champModels.find(id);
         if (modelIt == champModels.end()) continue;
 
-        float scale = champScales[champion.id];
+        float scale = champScales[id];
+
         Vector3 pos = BenchCenter(i);
-        pos.y = champYOffsets[champion.id];
+        pos.y = champYOffsets[id];
 
-        BoundingBox bounds = champBounds[champion.id];
-
-        BoundingBox worldBounds = {
-            {
-                pos.x + bounds.min.x * scale,
-                pos.y + bounds.min.y * scale,
-                pos.z + bounds.min.z * scale
-            },
-            {
-                pos.x + bounds.max.x * scale,
-                pos.y + bounds.max.y * scale,
-                pos.z + bounds.max.z * scale
-            }
-        };
-
+        BoundingBox worldBounds = GetChampionHitbox(id, pos, scale);
         RayCollision hit = GetRayCollisionBox(ray, worldBounds);
 
         if (hit.hit && hit.distance < closestDistance) {
@@ -336,18 +323,24 @@ SlotRef BoardUI::getHoveredChampion(const Ray& ray, Engine& engine) {
 
     return hovered;
 }
+
 void BoardUI::drawAllChampions() {
+    const int startIndex = 60;
+    const int amount = 30;
     const int perRow = 10;
     const float spacingX = 1.25f;
     const float spacingZ = 1.55f;
 
-    int count = min(30, (int)Set18::ALL_CHAMPIONS.size());
+    int endIndex = min(startIndex + amount, (int)Set18::ALL_CHAMPIONS.size());
+    int count = endIndex - startIndex;
     int rows = (count + perRow - 1) / perRow;
 
     float totalWidth = (perRow - 1) * spacingX;
     float totalDepth = (rows - 1) * spacingZ;
 
-    for (int i = 0; i < count; i++) {
+    DrawGrid(30, 1.0f);
+
+    for (int i = startIndex; i < endIndex; i++) {
         const Champion& champion = Set18::ALL_CHAMPIONS[i];
         int id = champion.id;
 
@@ -374,25 +367,45 @@ void BoardUI::drawAllChampions() {
             UpdateModelAnimation(model, anims[0], (int)champAnimFrame[id]);
         }
 
-        int col = i % perRow;
-        int row = i / perRow;
+        int displayIndex = i - startIndex;
+        int col = displayIndex % perRow;
+        int row = displayIndex / perRow;
 
-        Vector3 pos = {
+        Vector3 basePos = {
             col * spacingX - totalWidth / 2.0f,
             0.0f,
             row * spacingZ - totalDepth / 2.0f
         };
 
         float scale = champScales[id];
-        pos.y = champYOffsets[id];
-
-        DrawModelEx(model, pos, {0,1,0}, 0.0f, {scale,scale,scale}, WHITE);
 
         BoundingBox bounds = champBounds[id];
+        float modelHeight = (bounds.max.y - bounds.min.y) * scale;
 
-        BoundingBox worldBounds = GetChampionHitbox(id, pos, scale);
-        DrawBoundingBox(worldBounds, RED);
+        float groundOffset = 0.0f;
 
+        auto groundIt = Set18::groundOffsets.find(id);
+        if (groundIt != Set18::groundOffsets.end()) {
+            groundOffset = groundIt->second;
+        }
+
+        // Hitbox position does NOT use groundOffset
+        Vector3 hitboxPos = basePos;
+        hitboxPos.y = champYOffsets[id];
+
+        // Model position DOES use groundOffset
+        Vector3 modelPos = hitboxPos;
+        modelPos.y += modelHeight * groundOffset;
+
+        // Solid flattened mesh on actual ground
+        Vector3 shadowPos = {modelPos.x, 0.01f, modelPos.z};
+        DrawModelEx(model, shadowPos, {0,1,0}, 0.0f, {scale, 0.001f, scale}, BLACK);
+
+        // Actual champion
+        DrawModelEx(model, modelPos, {0,1,0}, 0.0f, {scale,scale,scale}, WHITE);
+
+        // Hitbox remains unaffected by groundOffset
+        BoundingBox worldBounds = GetChampionHitbox(id, hitboxPos, scale);
         DrawBoundingBox(worldBounds, RED);
     }
 }
@@ -412,34 +425,136 @@ BoundingBox BoardUI::GetChampionHitbox(int id, const Vector3& pos, float scale) 
     if (offsetIt != Set18::hitboxOffsets.end()) {
         hitboxOffset = offsetIt->second;
     }
-    float centerX = (bounds.min.x + bounds.max.x) / 2.0f;
-    float centerY = (bounds.min.y + bounds.max.y) / 2.0f;
-    float centerZ = (bounds.min.z + bounds.max.z) / 2.0f;
 
     float width = (bounds.max.x - bounds.min.x) * scale;
     float height = (bounds.max.y - bounds.min.y) * scale;
     float depth = (bounds.max.z - bounds.min.z) * scale;
 
+    float centerX = pos.x + ((bounds.min.x + bounds.max.x) / 2.0f) * scale;
+    float centerZ = pos.z + ((bounds.min.z + bounds.max.z) / 2.0f) * scale;
+
     float halfX = width / 2.0f * hitboxScale.x;
-    float halfY = height / 2.0f * hitboxScale.y;
     float halfZ = depth / 2.0f * hitboxScale.z;
 
     float offsetX = width * hitboxOffset.x;
     float offsetY = height * hitboxOffset.y;
     float offsetZ = depth * hitboxOffset.z;
-    float minY = pos.y + bounds.min.y * scale;
+
+    float minY = pos.y + bounds.min.y * scale + offsetY;
     float maxY = minY + height * hitboxScale.y;
 
     return {
-        {
-            pos.x + centerX * scale + offsetX - halfX,
-            minY + offsetY,
-            pos.z + centerZ * scale + offsetZ - halfZ
-        },
-        {
-            pos.x + centerX * scale + offsetX + halfX,
-            maxY + offsetY,
-            pos.z + centerZ * scale + offsetZ + halfZ
-        }
+        {centerX + offsetX - halfX, minY, centerZ + offsetZ - halfZ},
+        {centerX + offsetX + halfX, maxY, centerZ + offsetZ + halfZ}
     };
+}
+
+void BoardUI::drawDraggedChampionModel(const Drag& drag, const Vector3& mousePosition, const Champion* champion) {
+    if (drag.GetState().phase != DragPhase::Dragging) return;
+    if (drag.GetState().payload != DragPayload::Champion) return;
+    if (drag.GetState().source.zone != Zone::Bench && drag.GetState().source.zone != Zone::Board) return;
+    if (champion == nullptr || champion->id == 0) return;
+
+    int id = champion->id;
+
+    auto modelIt = champModels.find(id);
+    if (modelIt == champModels.end()) return;
+
+    Vector3 position = mousePosition;
+
+    float scale = champScales[id];
+    float yOff = champYOffsets[id];
+
+    auto groundIt = Set18::groundOffsets.find(id);
+    if (groundIt != Set18::groundOffsets.end()) {
+        BoundingBox bounds = champBounds[id];
+        float modelHeight = (bounds.max.y - bounds.min.y) * scale;
+        yOff += modelHeight * groundIt->second;
+    }
+
+    position.y = yOff;
+
+    DrawModelEx(modelIt->second, position, {0.0f, 1.0f, 0.0f}, 0.0f, {scale, scale, scale}, WHITE);
+}
+
+void BoardUI::drawChampionModel(Model& model, const Vector3& pos, float scale, bool hovered) {
+    DrawModelEx(model, pos, {0,1,0}, 0.0f, {scale,scale,scale}, WHITE);
+}
+
+void BoardUI::renderHoveredChampionMask(Engine& engine, const Drag& drag, const Camera3D& camera, const Vector3& mousePosition, int hoveredRow, int hoveredCol, int hoveredBench, const Champion* draggedChampion) {
+    const Champion* champion = nullptr;
+    Vector3 pos = {0.0f, 0.0f, 0.0f};
+
+    bool draggingChampion =
+        drag.GetState().phase == DragPhase::Dragging &&
+        drag.GetState().payload == DragPayload::Champion &&
+        (drag.GetState().source.zone == Zone::Board || drag.GetState().source.zone == Zone::Bench);
+
+    if (draggingChampion && draggedChampion != nullptr) {
+        champion = draggedChampion;
+        pos = mousePosition;
+    } else if (hoveredRow != -1 && hoveredCol != -1 && engine.gamestate.board[hoveredRow][hoveredCol].id != 0) {
+        champion = &engine.gamestate.board[hoveredRow][hoveredCol];
+        pos = HexCenter(hoveredRow, hoveredCol);
+    } else if (hoveredBench != -1 && engine.gamestate.bench[hoveredBench].id != 0) {
+        champion = &engine.gamestate.bench[hoveredBench];
+        pos = BenchCenter(hoveredBench);
+    }
+
+    BeginTextureMode(outlineMask);
+    ClearBackground(BLANK);
+
+    if (champion != nullptr && champion->id != 0) {
+        int id = champion->id;
+
+        auto modelIt = champModels.find(id);
+
+        if (modelIt != champModels.end()) {
+            float scale = champScales[id];
+            float yOff = champYOffsets[id];
+
+            auto groundIt = Set18::groundOffsets.find(id);
+
+            if (groundIt != Set18::groundOffsets.end()) {
+                BoundingBox bounds = champBounds[id];
+                float modelHeight = (bounds.max.y - bounds.min.y) * scale;
+                yOff += modelHeight * groundIt->second;
+            }
+
+            pos.y = yOff;
+
+            BeginMode3D(camera);
+
+            rlDisableBackfaceCulling();
+
+            DrawModelEx(modelIt->second, pos, {0,1,0}, 0.0f, {scale,scale,scale}, WHITE);
+
+            rlEnableBackfaceCulling();
+
+            EndMode3D();
+        }
+    }
+
+    EndTextureMode();
+}
+
+void BoardUI::drawChampionOutline() {
+    Vector2 texelSize = {
+        1.0f / outlineMask.texture.width,
+        1.0f / outlineMask.texture.height
+    };
+
+    int texelLoc = GetShaderLocation(outlineShader, "texelSize");
+    SetShaderValue(outlineShader, texelLoc, &texelSize, SHADER_UNIFORM_VEC2);
+
+    BeginShaderMode(outlineShader);
+
+    DrawTextureRec(
+        outlineMask.texture,
+        {0.0f, 0.0f, (float)outlineMask.texture.width, -(float)outlineMask.texture.height},
+        {0.0f, 0.0f},
+        WHITE
+    );
+
+    EndShaderMode();
 }

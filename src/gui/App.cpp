@@ -261,7 +261,6 @@ void App::run() {
         }
         HandleDragRelease(hoveredBench, hoveredRow, hoveredCol, hoveredItem);
         
-        
         BeginDrawing();
         ClearBackground(GRAY);
 
@@ -274,21 +273,17 @@ void App::run() {
             Fade(WHITE, 0.3f)
         );
 
-        // BeginMode3D(camera);
-        // Vector3 mousePosition = {};
-        // GetMouseGroundPosition(mousePosition);
-        // rlDisableBackfaceCulling();
-        // board.drawVisuals(engine, drag, mousePosition, hoveredRow, hoveredCol, hoveredBench, GetDraggedChampion());
-        // rlEnableBackfaceCulling();
+        Vector3 mousePosition = {0.0f, 0.0f, 0.0f};
+        GetMouseGroundPosition(mousePosition);
+
+        const Champion* draggedChampion = GetDraggedChampion();
         BeginMode3D(camera);
 
         rlDisableBackfaceCulling();
 
-        board.drawAllChampions();
-
+        board.drawVisuals(engine, drag, camera, mousePosition, hoveredRow, hoveredCol, hoveredBench, draggedChampion);
+        
         rlEnableBackfaceCulling();
-
-        EndMode3D();
 
         EndMode3D();
         // shop
