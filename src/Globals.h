@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <set>
+#include "raylib.h"
 using namespace std;
 
 extern const vector<vector<int>> shopodds;
@@ -205,6 +206,8 @@ namespace Set18 {
   extern const map<pair<int,int>, string> completedItems;
 
   extern const unordered_map<int, float> scales;
+  extern const unordered_map<int, Vector3> hitboxScales;
+  extern const unordered_map<int, Vector3> hitboxOffsets;
 
 //   extern const trait Adaptor;
 //   extern const trait ApexPredator;

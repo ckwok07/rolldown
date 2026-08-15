@@ -238,6 +238,16 @@ void App::run() {
                 }
             }
         }
+        SlotRef hoveredChampion = board.getHoveredChampion(ray, engine);
+
+        if (hoveredChampion.zone == Zone::Board) {
+            hoveredRow = hoveredChampion.row;
+            hoveredCol = hoveredChampion.col;
+        }
+
+        if (hoveredChampion.zone == Zone::Bench) {
+            hoveredBench = hoveredChampion.index;
+        }
         
         HandleDragPress(hoveredShop, hoveredBench, hoveredRow, hoveredCol);
         if (drag.GetState().phase == DragPhase::Dragging && drag.GetState().payload == DragPayload::Item) {
@@ -264,12 +274,21 @@ void App::run() {
             Fade(WHITE, 0.3f)
         );
 
+        // BeginMode3D(camera);
+        // Vector3 mousePosition = {};
+        // GetMouseGroundPosition(mousePosition);
+        // rlDisableBackfaceCulling();
+        // board.drawVisuals(engine, drag, mousePosition, hoveredRow, hoveredCol, hoveredBench, GetDraggedChampion());
+        // rlEnableBackfaceCulling();
         BeginMode3D(camera);
-        Vector3 mousePosition = {};
-        GetMouseGroundPosition(mousePosition);
+
         rlDisableBackfaceCulling();
-        board.drawVisuals(engine, drag, mousePosition, hoveredRow, hoveredCol, hoveredBench, GetDraggedChampion());
+
+        board.drawAllChampions();
+
         rlEnableBackfaceCulling();
+
+        EndMode3D();
 
         EndMode3D();
         // shop

@@ -23,6 +23,8 @@ private:
     std::unordered_map<int, float> champAnimFrame;
     std::unordered_map<int, float> champAnimDir;
 
+    unordered_map<int, BoundingBox> champBounds;
+
 public:
     BoardUI(/* args */);
     ~BoardUI();
@@ -42,4 +44,9 @@ public:
 
     void drawDraggedChampionModel(const Drag& drag, const Vector3& mousePosition, const Champion* champion);
     const Champion* GetDraggedChampion(const Drag& drag, Engine& engine) const;
+
+    SlotRef getHoveredChampion(const Ray& ray, Engine& engine);
+    void drawAllChampions();
+
+    BoundingBox GetChampionHitbox(int id, const Vector3& pos, float scale) const;
 };
