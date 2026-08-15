@@ -282,10 +282,10 @@ void App::run() {
         rlDisableBackfaceCulling();
 
         board.drawVisuals(engine, drag, camera, mousePosition, hoveredRow, hoveredCol, hoveredBench, draggedChampion);
-        
         rlEnableBackfaceCulling();
 
         EndMode3D();
+
         // shop
         shop.DrawShop(engine, hoveredShop, hoverXp, hoverReroll, drag.GetState(), GetDraggedChampion());
         traits.DrawTraits(engine, drag);

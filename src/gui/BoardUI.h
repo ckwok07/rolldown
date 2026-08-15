@@ -45,11 +45,11 @@ public:
 
     void drawHexes(int hoveredRow, int hoveredCol);
     void drawSquares(int hoveredBench);
-    void drawChampions(Engine& engine, const Drag& drag, const Vector3& mousePosition, const Champion* draggedChampion, int hoveredRow, int hoveredCol, int hoveredBench);
+    void drawChampions(Engine& engine, const Drag& drag, const Camera3D& camera, const Champion* draggedChampion, int hoveredRow, int hoveredCol, int hoveredBench);
 
     void drawVisuals(Engine& engine, const Drag& drag, const Camera3D& camera, const Vector3& mousePosition, int hoveredRow, int hoveredCol, int hoveredBench, const Champion* draggedChampion);
 
-    void drawDraggedChampionModel(const Drag& drag, const Vector3& mousePosition, const Champion* champion);
+    void drawDraggedChampionModel(const Drag& drag, const Camera3D& camera, const Champion* champion);
     const Champion* GetDraggedChampion(const Drag& drag, Engine& engine) const;
 
     SlotRef getHoveredChampion(const Ray& ray, Engine& engine);

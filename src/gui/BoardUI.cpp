@@ -2,6 +2,157 @@
 #include <cfloat>
 #include "rlgl.h"
 
+static BoundingBox BuildDragHitbox(int id, const BoundingBox& bounds, const Vector3& pos, float scale) {
+    Vector3 hitboxScale = {1.0f, 1.0f, 1.0f};
+    Vector3 hitboxOffset = {0.0f, 0.0f, 0.0f};
+
+    auto scaleIt = Set18::hitboxScales.find(id);
+    if (scaleIt != Set18::hitboxScales.end()) hitboxScale = scaleIt->second;
+
+    auto offsetIt = Set18::hitboxOffsets.find(id);
+    if (offsetIt != Set18::hitboxOffsets.end()) hitboxOffset = offsetIt->second;
+
+    float width = (bounds.max.x - bounds.min.x) * scale;
+    float height = (bounds.max.y - bounds.min.y) * scale;
+    float depth = (bounds.max.z - bounds.min.z) * scale;
+
+    float centerX = pos.x + ((bounds.min.x + bounds.max.x) / 2.0f) * scale;
+    float centerZ = pos.z + ((bounds.min.z + bounds.max.z) / 2.0f) * scale;
+
+    float halfX = width / 2.0f * hitboxScale.x;
+    float halfZ = depth / 2.0f * hitboxScale.z;
+
+    float offsetX = width * hitboxOffset.x;
+    float offsetY = height * hitboxOffset.y;
+    float offsetZ = depth * hitboxOffset.z;
+
+    float minY = pos.y + bounds.min.y * scale + offsetY;
+    float maxY = minY + height * hitboxScale.y;
+
+    return {
+        {centerX + offsetX - halfX, minY, centerZ + offsetZ - halfZ},
+        {centerX + offsetX + halfX, maxY, centerZ + offsetZ + halfZ}
+    };
+}
+
+static bool IntersectRayPlane(const Ray& ray, const Vector3& planePoint, const Vector3& planeNormal, Vector3& result) {
+    float denom = ray.direction.x * planeNormal.x + ray.direction.y * planeNormal.y + ray.direction.z * planeNormal.z;
+    if (fabsf(denom) < 0.0001f) return false;
+
+    Vector3 diff = {
+        planePoint.x - ray.position.x,
+        planePoint.y - ray.position.y,
+        planePoint.z - ray.position.z
+    };
+
+    float t = (diff.x * planeNormal.x + diff.y * planeNormal.y + diff.z * planeNormal.z) / denom;
+    if (t < 0.0f) return false;
+
+    result = {
+        ray.position.x + ray.direction.x * t,
+        ray.position.y + ray.direction.y * t,
+        ray.position.z + ray.direction.z * t
+    };
+
+    return true;
+}
+
+static Vector3 GetCenteredDragPosition(int id, const BoundingBox& bounds, float scale, const Camera3D& camera) {
+    float centerX = (bounds.min.x + bounds.max.x) / 2.0f;
+    float centerY = (bounds.min.y + bounds.max.y) / 2.0f;
+    float centerZ = (bounds.min.z + bounds.max.z) / 2.0f;
+
+    float modelHeight = (bounds.max.y - bounds.min.y) * scale;
+    float centerHeight = modelHeight * 0.5f;
+
+    Ray mouseRay = GetScreenToWorldRay(GetMousePosition(), camera);
+
+    float t = (centerHeight - mouseRay.position.y) / mouseRay.direction.y;
+
+    Vector3 mouseCenter = {
+        mouseRay.position.x + mouseRay.direction.x * t,
+        centerHeight,
+        mouseRay.position.z + mouseRay.direction.z * t
+    };
+
+    Vector3 position = {
+        mouseCenter.x - centerX * scale,
+        mouseCenter.y - centerY * scale,
+        mouseCenter.z - centerZ * scale
+    };
+
+    for (int iteration = 0; iteration < 3; iteration++) {
+        BoundingBox box = BuildDragHitbox(id, bounds, position, scale);
+
+        Vector3 corners[8] = {
+            {box.min.x, box.min.y, box.min.z},
+            {box.max.x, box.min.y, box.min.z},
+            {box.min.x, box.max.y, box.min.z},
+            {box.max.x, box.max.y, box.min.z},
+            {box.min.x, box.min.y, box.max.z},
+            {box.max.x, box.min.y, box.max.z},
+            {box.min.x, box.max.y, box.max.z},
+            {box.max.x, box.max.y, box.max.z}
+        };
+
+        float minX = FLT_MAX;
+        float minY = FLT_MAX;
+        float maxX = -FLT_MAX;
+        float maxY = -FLT_MAX;
+
+        for (int i = 0; i < 8; i++) {
+            Vector2 screen = GetWorldToScreen(corners[i], camera);
+
+            if (screen.x < minX) minX = screen.x;
+            if (screen.x > maxX) maxX = screen.x;
+            if (screen.y < minY) minY = screen.y;
+            if (screen.y > maxY) maxY = screen.y;
+        }
+
+        Vector2 screenCenter = {
+            (minX + maxX) * 0.5f,
+            (minY + maxY) * 0.5f
+        };
+
+        Vector2 mouse = GetMousePosition();
+
+        if (fabsf(mouse.x - screenCenter.x) < 0.1f && fabsf(mouse.y - screenCenter.y) < 0.1f) break;
+
+        Vector3 boxCenter = {
+            (box.min.x + box.max.x) * 0.5f,
+            (box.min.y + box.max.y) * 0.5f,
+            (box.min.z + box.max.z) * 0.5f
+        };
+
+        Vector3 planeNormal = {
+            camera.target.x - camera.position.x,
+            camera.target.y - camera.position.y,
+            camera.target.z - camera.position.z
+        };
+
+        float length = sqrtf(planeNormal.x * planeNormal.x + planeNormal.y * planeNormal.y + planeNormal.z * planeNormal.z);
+
+        planeNormal.x /= length;
+        planeNormal.y /= length;
+        planeNormal.z /= length;
+
+        Ray centerRay = GetScreenToWorldRay(screenCenter, camera);
+        Ray targetRay = GetScreenToWorldRay(mouse, camera);
+
+        Vector3 currentWorld;
+        Vector3 targetWorld;
+
+        if (!IntersectRayPlane(centerRay, boxCenter, planeNormal, currentWorld)) break;
+        if (!IntersectRayPlane(targetRay, boxCenter, planeNormal, targetWorld)) break;
+
+        position.x += targetWorld.x - currentWorld.x;
+        position.y += targetWorld.y - currentWorld.y;
+        position.z += targetWorld.z - currentWorld.z;
+    }
+
+    return position;
+}
+
 BoardUI::BoardUI(/* args */)
 {
 }
@@ -158,7 +309,7 @@ void BoardUI::drawSquares(int hoveredBench) {
     }
 }
 
-void BoardUI::drawChampions(Engine& engine, const Drag& drag, const Vector3& mousePosition, const Champion* draggedChampion, int hoveredRow, int hoveredCol, int hoveredBench) {
+void BoardUI::drawChampions(Engine& engine, const Drag& drag, const Camera3D& camera, const Champion* draggedChampion, int hoveredRow, int hoveredCol, int hoveredBench) {
     for (auto& entry : champModels) {
         int id = entry.first;
         Model& model = entry.second;
@@ -223,6 +374,9 @@ void BoardUI::drawChampions(Engine& engine, const Drag& drag, const Vector3& mou
 
                 bool hovered = row == hoveredRow && col == hoveredCol;
                 drawChampionModel(model, pos, scale, hovered);
+                Vector3 hitboxPos = HexCenter(row, col);
+                hitboxPos.y = champYOffsets[id];
+                DrawBoundingBox(GetChampionHitbox(id, hitboxPos, scale), RED);
             }
         }
 
@@ -240,7 +394,7 @@ void BoardUI::drawChampions(Engine& engine, const Drag& drag, const Vector3& mou
         }
     }
 
-    drawDraggedChampionModel(drag, mousePosition, draggedChampion);
+    drawDraggedChampionModel(drag, camera, draggedChampion);
 }
 
 void BoardUI::drawVisuals(Engine& engine, const Drag& drag, const Camera3D& camera, const Vector3& mousePosition, int hoveredRow, int hoveredCol, int hoveredBench, const Champion* draggedChampion) {
@@ -260,7 +414,7 @@ void BoardUI::drawVisuals(Engine& engine, const Drag& drag, const Camera3D& came
         drawSquares(hoveredBench);
     }
 
-    drawChampions(engine, drag, mousePosition, draggedChampion, hoveredRow, hoveredCol, hoveredBench);
+    drawChampions(engine, drag, camera, draggedChampion, hoveredRow, hoveredCol, hoveredBench);
 
     rlEnableBackfaceCulling();
 
@@ -325,7 +479,7 @@ SlotRef BoardUI::getHoveredChampion(const Ray& ray, Engine& engine) {
 }
 
 void BoardUI::drawAllChampions() {
-    const int startIndex = 60;
+    const int startIndex = 30;
     const int amount = 30;
     const int perRow = 10;
     const float spacingX = 1.25f;
@@ -449,7 +603,7 @@ BoundingBox BoardUI::GetChampionHitbox(int id, const Vector3& pos, float scale) 
     };
 }
 
-void BoardUI::drawDraggedChampionModel(const Drag& drag, const Vector3& mousePosition, const Champion* champion) {
+void BoardUI::drawDraggedChampionModel(const Drag& drag, const Camera3D& camera, const Champion* champion) {
     if (drag.GetState().phase != DragPhase::Dragging) return;
     if (drag.GetState().payload != DragPayload::Champion) return;
     if (drag.GetState().source.zone != Zone::Bench && drag.GetState().source.zone != Zone::Board) return;
@@ -460,21 +614,10 @@ void BoardUI::drawDraggedChampionModel(const Drag& drag, const Vector3& mousePos
     auto modelIt = champModels.find(id);
     if (modelIt == champModels.end()) return;
 
-    Vector3 position = mousePosition;
-
     float scale = champScales[id];
-    float yOff = champYOffsets[id];
+    Vector3 position = GetCenteredDragPosition(id, champBounds[id], scale, camera);
 
-    auto groundIt = Set18::groundOffsets.find(id);
-    if (groundIt != Set18::groundOffsets.end()) {
-        BoundingBox bounds = champBounds[id];
-        float modelHeight = (bounds.max.y - bounds.min.y) * scale;
-        yOff += modelHeight * groundIt->second;
-    }
-
-    position.y = yOff;
-
-    DrawModelEx(modelIt->second, position, {0.0f, 1.0f, 0.0f}, 0.0f, {scale, scale, scale}, WHITE);
+    DrawModelEx(modelIt->second, position, {0,1,0}, 0.0f, {scale,scale,scale}, WHITE);
 }
 
 void BoardUI::drawChampionModel(Model& model, const Vector3& pos, float scale, bool hovered) {
@@ -492,7 +635,11 @@ void BoardUI::renderHoveredChampionMask(Engine& engine, const Drag& drag, const 
 
     if (draggingChampion && draggedChampion != nullptr) {
         champion = draggedChampion;
-        pos = mousePosition;
+
+        int id = champion->id;
+        float scale = champScales[id];
+
+        pos = GetCenteredDragPosition(id, champBounds[id], scale, camera);
     } else if (hoveredRow != -1 && hoveredCol != -1 && engine.gamestate.board[hoveredRow][hoveredCol].id != 0) {
         champion = &engine.gamestate.board[hoveredRow][hoveredCol];
         pos = HexCenter(hoveredRow, hoveredCol);
@@ -511,17 +658,19 @@ void BoardUI::renderHoveredChampionMask(Engine& engine, const Drag& drag, const 
 
         if (modelIt != champModels.end()) {
             float scale = champScales[id];
-            float yOff = champYOffsets[id];
 
-            auto groundIt = Set18::groundOffsets.find(id);
+            if (!draggingChampion) {
+                float yOff = champYOffsets[id];
 
-            if (groundIt != Set18::groundOffsets.end()) {
-                BoundingBox bounds = champBounds[id];
-                float modelHeight = (bounds.max.y - bounds.min.y) * scale;
-                yOff += modelHeight * groundIt->second;
+                auto groundIt = Set18::groundOffsets.find(id);
+                if (groundIt != Set18::groundOffsets.end()) {
+                    BoundingBox bounds = champBounds[id];
+                    float modelHeight = (bounds.max.y - bounds.min.y) * scale;
+                    yOff += modelHeight * groundIt->second;
+                }
+
+                pos.y = yOff;
             }
-
-            pos.y = yOff;
 
             BeginMode3D(camera);
 
