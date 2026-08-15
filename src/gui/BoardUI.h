@@ -60,4 +60,6 @@ public:
     void drawChampionModel(Model& model, const Vector3& pos, float scale, bool hovered);
 
     void renderHoveredChampionMask(Engine& engine, const Drag& drag, const Camera3D& camera, const Vector3& mousePosition, int hoveredRow, int hoveredCol, int hoveredBench, const Champion* draggedChampion);
+
+    void drawHealthBar(const Champion& champion, const BoundingBox& hitbox, const Camera3D& camera);
 };

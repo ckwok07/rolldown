@@ -364,7 +364,8 @@ void BoardUI::drawChampions(Engine& engine, const Drag& drag, const Camera3D& ca
 
         for (int row = 0; row < 4; row++) {
             for (int col = 0; col < 7; col++) {
-                if (engine.gamestate.board[row][col].id != id) continue;
+                Champion& champion = engine.gamestate.board[row][col];
+                if (champion.id != id) continue;
 
                 SlotRef slot = {Zone::Board, -1, row, col};
                 if (drag.IsDraggedSource(slot)) continue;
@@ -374,14 +375,19 @@ void BoardUI::drawChampions(Engine& engine, const Drag& drag, const Camera3D& ca
 
                 bool hovered = row == hoveredRow && col == hoveredCol;
                 drawChampionModel(model, pos, scale, hovered);
+
                 Vector3 hitboxPos = HexCenter(row, col);
                 hitboxPos.y = champYOffsets[id];
-                DrawBoundingBox(GetChampionHitbox(id, hitboxPos, scale), RED);
+
+                BoundingBox hitbox = GetChampionHitbox(id, hitboxPos, scale);
+                DrawBoundingBox(hitbox, RED);
+                drawHealthBar(champion, hitbox, camera);
             }
         }
 
         for (int i = 0; i < 9; i++) {
-            if (engine.gamestate.bench[i].id != id) continue;
+            Champion& champion = engine.gamestate.bench[i];
+            if (champion.id != id) continue;
 
             SlotRef slot = {Zone::Bench, i, -1, -1};
             if (drag.IsDraggedSource(slot)) continue;
@@ -391,6 +397,12 @@ void BoardUI::drawChampions(Engine& engine, const Drag& drag, const Camera3D& ca
 
             bool hovered = i == hoveredBench;
             drawChampionModel(model, pos, scale, hovered);
+
+            Vector3 hitboxPos = BenchCenter(i);
+            hitboxPos.y = champYOffsets[id];
+
+            BoundingBox hitbox = GetChampionHitbox(id, hitboxPos, scale);
+            drawHealthBar(champion, hitbox, camera);
         }
     }
 
@@ -618,6 +630,11 @@ void BoardUI::drawDraggedChampionModel(const Drag& drag, const Camera3D& camera,
     Vector3 position = GetCenteredDragPosition(id, champBounds[id], scale, camera);
 
     DrawModelEx(modelIt->second, position, {0,1,0}, 0.0f, {scale,scale,scale}, WHITE);
+
+    Vector3 hitboxPos = position;
+    BoundingBox hitbox = GetChampionHitbox(id, hitboxPos, scale);
+
+    drawHealthBar(*champion, hitbox, camera);
 }
 
 void BoardUI::drawChampionModel(Model& model, const Vector3& pos, float scale, bool hovered) {
@@ -706,4 +723,19 @@ void BoardUI::drawChampionOutline() {
     );
 
     EndShaderMode();
+}
+
+void BoardUI::drawHealthBar(const Champion& champion, const BoundingBox& hitbox, const Camera3D& camera) {
+    Vector3 anchor = {(hitbox.min.x + hitbox.max.x) * 0.5f, hitbox.max.y, (hitbox.min.z + hitbox.max.z) * 0.5f};
+    Vector2 screen = GetWorldToScreen(anchor, camera);
+
+    float width = 70.0f;
+    float height = 8.0f;
+    float offsetY = 25.0f;
+
+    Rectangle bar = {screen.x - width * 0.5f, screen.y - offsetY - height, width, height};
+
+    EndMode3D();
+    DrawRectangleRec(bar, SKYBLUE);
+    BeginMode3D(camera);
 }
