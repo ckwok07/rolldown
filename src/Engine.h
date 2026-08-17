@@ -78,7 +78,7 @@ public:
     // check traits
     void checkTraits();
     // combine items
-    void combineItems(Champion& champ, Item item);
+    void combineItems(Champion& champ);
     GameState gamestate;
 
 

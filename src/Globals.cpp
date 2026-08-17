@@ -421,7 +421,7 @@ namespace Set18 {
                                             {Set18::Alistar.id, 100.0f},
                                             {Set18::Caitlyn.id, 85.0f},
                                             {Set18::Elise.id, 230.0f},
-                                            {Set18::Gromp.id, 75.0f},
+                                            {Set18::Gromp.id, 60.0f},
                                             {Set18::Kayle.id, 120.0f},
                                             {Set18::LeBlanc.id, 95.0f},
                                             {Set18::Murkwolf.id, 40.0f},
@@ -438,9 +438,9 @@ namespace Set18 {
                                             {Set18::Fiddlesticks.id, 200.0f},
                                             {Set18::Hecarim.id, 140.0f},
                                             {Set18::KhaZix.id, 75.0f},
-                                            {Set18::KogMaw.id, 80.0f},
+                                            {Set18::KogMaw.id, 70.0f},
                                             {Set18::Krug.id, 60.0f},
-                                            {Set18::MamaBeak.id, 60.0f},
+                                            {Set18::MamaBeak.id, 45.0f},
                                             {Set18::MasterYi.id, 90.0f},
                                             {Set18::Rammus.id, 200.0f},
                                             {Set18::Rengar.id, 90.0f},
@@ -474,7 +474,7 @@ namespace Set18 {
                                             {Set18::Taric.id, 85.0f}};
 
     const unordered_map<int, Vector3> hitboxScales = {
-            {Set18::Akali.id, {0.15f, 0.9f, 0.8f}},
+            {Set18::Akali.id, {0.15f, 0.75f, 0.8f}},
             {Set18::Camille.id, {1.0f, 1.0f, 1.0f}},
             {Set18::Cinderling.id, {0.8f, 1.0f, 1.0f}},
             {Set18::Karma.id, {0.8f, 1.0f, 1.0f}},
@@ -542,7 +542,7 @@ namespace Set18 {
             {Set18::Kennen.id, {0.4f, 1.0f, 1.0f}},
             {Set18::Lux.id, {0.5f, 1.0f, 1.0f}},
             {Set18::Maokai.id, {0.4f, 1.0f, 0.7f}},
-            {Set18::Taric.id, {0.5f, 1.0f, 0.9f}}
+            {Set18::Taric.id, {0.5f, 0.8f, 0.9f}}
         };
 
     const unordered_map<int, Vector3> hitboxOffsets = {

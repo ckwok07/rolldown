@@ -58,6 +58,10 @@ void Engine::initGameState(SetId set) {
     gamestate.stage = 2;
     initChampPool();
     initShop();
+
+    gamestate.bench[0] = {1, "Akali", 1, 1, {20, 1, 28}, {}};
+    gamestate.bench[1] = {1, "Akali", 1, 2, {20, 1, 28}, {}};
+    gamestate.bench[2] = {1, "Akali", 1, 3, {20, 1, 28}, {}};
 }
 
 // secondary initgamestate
@@ -307,7 +311,17 @@ void Engine::sellboard(pair<int, int> index) {
     else if (sold.cost == 5) maxCopies = 9;
 
     for (int i = 0; i < sold.items.size(); i++) {
-        gamestate.items.push_back(sold.items[i]);
+        bool placed = false;
+
+        for (int j = 0; j < gamestate.items.size(); j++) {
+            if (holds_alternative<int>(gamestate.items[j]) && get<int>(gamestate.items[j]) == -1) {
+                gamestate.items[j] = sold.items[i];
+                placed = true;
+                break;
+            }
+        }
+
+        if (!placed) gamestate.items.push_back(sold.items[i]);
     }
 
     int copies = 1;
@@ -420,21 +434,72 @@ void Engine::fieldUnit(int from) {
 // slam item
 void Engine::slamBoard(int index, pair<int,int> position) {
     if (holds_alternative<int>(gamestate.items[index]) && get<int>(gamestate.items[index]) == -1) return;
-    if (gamestate.board[position.first][position.second] == nullChamp) return;
-    if (gamestate.board[position.first][position.second].items.size() == 3) return;
 
-    gamestate.board[position.first][position.second].items.push_back(gamestate.items[index]);
+    Champion& champ = gamestate.board[position.first][position.second];
+    if (champ == nullChamp) return;
+
+    bool canCombine = false;
+
+    if (holds_alternative<int>(gamestate.items[index])) {
+        int incoming = get<int>(gamestate.items[index]);
+
+        for (auto& item : champ.items) {
+            if (!holds_alternative<int>(item)) continue;
+
+            int existing = get<int>(item);
+            int a = min(incoming, existing);
+            int b = max(incoming, existing);
+
+            if (completedItems.find({a, b}) != completedItems.end()) {
+                canCombine = true;
+                break;
+            }
+        }
+    }
+
+    if (champ.items.size() == 3 && !canCombine) return;
+
+    champ.items.push_back(gamestate.items[index]);
     gamestate.items.erase(gamestate.items.begin() + index);
+
+    combineItems(champ);
+
     updateGamestate();
 }
+
 void Engine::slamBench(int index, int position) {
     if (holds_alternative<int>(gamestate.items[index]) && get<int>(gamestate.items[index]) == -1) return;
-    if (gamestate.bench[position] == nullChamp) return;
-    if (gamestate.bench[position].items.size() == 3) return;
 
-    gamestate.bench[position].items.push_back(gamestate.items[index]);
+    Champion& champ = gamestate.bench[position];
+    if (champ == nullChamp) return;
+
+    bool canCombine = false;
+
+    if (holds_alternative<int>(gamestate.items[index])) {
+        int incoming = get<int>(gamestate.items[index]);
+
+        for (auto& item : champ.items) {
+            if (!holds_alternative<int>(item)) continue;
+
+            int existing = get<int>(item);
+            int a = min(incoming, existing);
+            int b = max(incoming, existing);
+
+            if (completedItems.find({a, b}) != completedItems.end()) {
+                canCombine = true;
+                break;
+            }
+        }
+    }
+
+    if (champ.items.size() == 3 && !canCombine) return;
+
+    champ.items.push_back(gamestate.items[index]);
     gamestate.items.erase(gamestate.items.begin() + index);
+
+    combineItems(champ);
 }
+
 // combine items
 bool Engine::combine(int index1, int index2) {
     if (!holds_alternative<int>(gamestate.items[index1])) return false;
@@ -816,6 +881,29 @@ void Engine::checkTraits() {
     return;
 }
 
-void Engine::combineItems(Champion& champ, Item item) {
-    return;
+void Engine::combineItems(Champion& champ) {
+    vector<pair<Item,int>> components;
+
+    for (int i = 0; i < champ.items.size(); i++) {
+        if (holds_alternative<int>(champ.items[i])) {
+            components.push_back({champ.items[i], i});
+        }
+    }
+
+    if (components.size() < 2) return;
+
+    int a = get<int>(components[0].first);
+    int b = get<int>(components[1].first);
+
+    if (a > b) swap(a, b);
+
+    pair<int,int> combined = {a, b};
+
+    if (completedItems.find(combined) == completedItems.end()) return;
+
+    int firstIndex = components[0].second;
+    int secondIndex = components[1].second;
+
+    champ.items[firstIndex] = combined;
+    champ.items.erase(champ.items.begin() + secondIndex);
 }

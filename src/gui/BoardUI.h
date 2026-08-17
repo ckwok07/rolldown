@@ -14,6 +14,9 @@ private:
     float r = 0.55f;
     float drawR = r * 0.90f; 
     float squareSide = r * 1.2f;
+    Vector3 draggedPosition = {};
+    bool hasDraggedPosition = false;
+    unordered_map<string, Texture2D> itemTextures;
 
     std::unordered_map<int, Model> champModels;
     std::unordered_map<int, ModelAnimation*> champAnims;
@@ -31,6 +34,7 @@ private:
 
 
     Shader outlineShader = {};
+    Texture2D starTextures[4];  
 
 public:
     BoardUI(/* args */);
@@ -62,4 +66,8 @@ public:
     void renderHoveredChampionMask(Engine& engine, const Drag& drag, const Camera3D& camera, const Vector3& mousePosition, int hoveredRow, int hoveredCol, int hoveredBench, const Champion* draggedChampion);
 
     void drawHealthBar(const Champion& champion, const BoundingBox& hitbox, const Camera3D& camera);
+
+    Texture2D* GetItemTexture(const Item& item);
+
+    string GetItemName(const Item& item);
 };

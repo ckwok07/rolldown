@@ -141,21 +141,21 @@ void ShopUI::DrawTextureCover( Texture2D texture, Rectangle destination, Color t
 }
 
 void ShopUI::DrawShopIcon(Rectangle rect, Champion& champion, bool highlighted, bool sourceHidden, bool samechamps) {
-    // card boder
-    float cardBorder = 10.0f;
+    // card border
+    float cardBorder = 12.0f;
     DrawRectangleLinesEx(rect, cardBorder, BLACK);
 
-    float border = 2.5f;
+    float border = 3.0f;
     float infoHeight = rect.height * 0.18f;
 
     Rectangle innerRect = { rect.x + border, rect.y + border, rect.width - border * 2.0f, rect.height - border * 2.0f};
 
-    // spash art rectangle
+    // splash art rectangle
     float splashBorder = 4.0f;
     Rectangle artRect = {innerRect.x, innerRect.y, innerRect.width, innerRect.height - infoHeight};
 
-    // splash out black ouline
-    Rectangle splashRect = {artRect.x - splashBorder,artRect.y - splashBorder,artRect.width + splashBorder * 2.0f,artRect.height + splashBorder * 2.0f};
+    // splash outer black outline
+    Rectangle splashRect = {artRect.x - splashBorder, artRect.y - splashBorder, artRect.width + splashBorder * 2.0f, artRect.height + splashBorder * 2.0f};
 
     // name rectangle
     Rectangle infoRect = {innerRect.x, artRect.y + artRect.height, innerRect.width, infoHeight};
@@ -163,11 +163,12 @@ void ShopUI::DrawShopIcon(Rectangle rect, Champion& champion, bool highlighted, 
     if (champion.id != 0 && !sourceHidden) {
         Texture2D* splash = GetChampionSplash(champion.name);
 
-        DrawRectangleRec(splashRect, BLACK);
+        //DrawRectangleRec(splashRect, BLACK);
         DrawRectangleGradientEx(rect, ShopTierColor(champion.cost).first, ShopTierColor(champion.cost).first, ShopTierColor(champion.cost).second, ShopTierColor(champion.cost).second);
 
         if (splash != nullptr) {
             DrawTextureCover(*splash, artRect, WHITE);
+            DrawRectangleLinesEx(artRect, 1.5f, BLACK);   // thin border around the splash art
         }
 
         int traitFontSize = 15;
@@ -216,6 +217,8 @@ void ShopUI::DrawShopIcon(Rectangle rect, Champion& champion, bool highlighted, 
         }
         DrawLineEx({infoRect.x, infoRect.y + 2.0f}, {infoRect.x + infoRect.width, infoRect.y}, 2.0f, Fade(WHITE, 0.07f));
         DrawRectangleLinesEx(rect, 2.0f, Fade(WHITE, 0.07f));
+
+        DrawRectangleLinesEx(rect, 1.5f, BLACK);   // thin black border around the whole icon
     }
 }
 

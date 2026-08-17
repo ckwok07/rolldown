@@ -215,6 +215,10 @@ void BoardUI::init(SetId set) {
         champAnimFrame[champ.id]  = 0.0f;
         champAnimDir[champ.id]    = 1.0f;
     }
+
+    starTextures[1] = LoadTexture("assets/global/1star.png");
+    starTextures[2] = LoadTexture("assets/global/2star.png");
+    starTextures[3] = LoadTexture("assets/global/3star.png");
 }
 void BoardUI::shutdown() {
     for (auto& e : champModels) UnloadModel(e.second);
@@ -224,6 +228,16 @@ void BoardUI::shutdown() {
     if (outlineMask.id != 0) {
         UnloadRenderTexture(outlineMask);
         outlineMask = {};
+    }
+
+    for (auto& [name, texture] : itemTextures) {
+        if (texture.id != 0) UnloadTexture(texture);
+    }
+
+    itemTextures.clear();
+
+    for (int i = 1; i <= 3; i++) {
+        if (starTextures[i].id != 0) UnloadTexture(starTextures[i]);
     }
 }
 
@@ -627,7 +641,8 @@ void BoardUI::drawDraggedChampionModel(const Drag& drag, const Camera3D& camera,
     if (modelIt == champModels.end()) return;
 
     float scale = champScales[id];
-    Vector3 position = GetCenteredDragPosition(id, champBounds[id], scale, camera);
+    if (!hasDraggedPosition) return;
+    Vector3 position = draggedPosition;
 
     DrawModelEx(modelIt->second, position, {0,1,0}, 0.0f, {scale,scale,scale}, WHITE);
 
@@ -650,13 +665,18 @@ void BoardUI::renderHoveredChampionMask(Engine& engine, const Drag& drag, const 
         drag.GetState().payload == DragPayload::Champion &&
         (drag.GetState().source.zone == Zone::Board || drag.GetState().source.zone == Zone::Bench);
 
+    hasDraggedPosition = false;
+
     if (draggingChampion && draggedChampion != nullptr) {
         champion = draggedChampion;
 
         int id = champion->id;
         float scale = champScales[id];
 
-        pos = GetCenteredDragPosition(id, champBounds[id], scale, camera);
+        draggedPosition = GetCenteredDragPosition(id, champBounds[id], scale, camera);
+        hasDraggedPosition = true;
+        pos = draggedPosition;
+        
     } else if (hoveredRow != -1 && hoveredCol != -1 && engine.gamestate.board[hoveredRow][hoveredCol].id != 0) {
         champion = &engine.gamestate.board[hoveredRow][hoveredCol];
         pos = HexCenter(hoveredRow, hoveredCol);
@@ -706,8 +726,8 @@ void BoardUI::renderHoveredChampionMask(Engine& engine, const Drag& drag, const 
 
 void BoardUI::drawChampionOutline() {
     Vector2 texelSize = {
-        1.0f / outlineMask.texture.width,
-        1.0f / outlineMask.texture.height
+        0.5f / outlineMask.texture.width,
+        0.5f / outlineMask.texture.height
     };
 
     int texelLoc = GetShaderLocation(outlineShader, "texelSize");
@@ -731,11 +751,116 @@ void BoardUI::drawHealthBar(const Champion& champion, const BoundingBox& hitbox,
 
     float width = 70.0f;
     float height = 8.0f;
-    float offsetY = 25.0f;
+    float offsetY = 35.0f;
 
-    Rectangle bar = {screen.x - width * 0.5f, screen.y - offsetY - height, width, height};
+    float itemSize = (width + 9.0f) / 3.0f;
+    bool hasItems = !champion.items.empty();
+
+    float barY = screen.y - offsetY - height;
+
+    if (hasItems) {
+        barY -= itemSize;
+    }
 
     EndMode3D();
-    DrawRectangleRec(bar, SKYBLUE);
+    float inset = 2.0f;   // uniform border, both bars, all edges
+
+    // health bar
+    Rectangle bar = {screen.x - width * 0.5f, barY, width, height};
+    DrawRectangleRec(bar, BLACK);
+    Rectangle green = {bar.x + inset, bar.y + inset, bar.width - 2 * inset, bar.height - 2 * inset};
+    DrawRectangleRec(green, {6,250,23,255});
+
+    // mana bar, flush under the health bar
+    float manaHeight = 4.0f;
+    Rectangle manaBar = {bar.x, bar.y + bar.height, width, manaHeight};
+    DrawRectangleRec(manaBar, BLACK);
+    Rectangle blue = {manaBar.x + inset, manaBar.y, manaBar.width - 2 * inset, manaBar.height - inset};
+    DrawRectangleRec(blue, {40, 130, 255, 255});
+    
+
+    if (hasItems) {
+        float itemY = bar.y + bar.height + manaHeight;
+
+        for (int i = 0; i < champion.items.size() && i < 3; i++) {
+            Texture2D* texture = GetItemTexture(champion.items[i]);
+            if (texture == nullptr) continue;
+            
+            
+            Rectangle source = {0.0f, 0.0f, (float)texture->width, (float)texture->height};
+            float overflow = itemSize * 3 - width;
+            Rectangle outline = {bar.x - overflow * 0.5f + i * itemSize, itemY, itemSize, itemSize};
+            float inset = itemSize * 0.05f;
+            Rectangle dest = {bar.x - overflow * 0.5f + i * itemSize + inset, itemY + inset, itemSize - 2 * inset, itemSize - 2 * inset};
+
+            DrawRectangleRec(outline, BLACK);
+            DrawTexturePro(*texture, source, dest, {0.0f, 0.0f}, 0.0f, WHITE);
+        }
+    }
+
+    Texture2D star = starTextures[champion.starLevel];
+
+    float starScale = 1.0f;
+    float starXOffset = 0.0f;
+    if (champion.starLevel == 1)      { starScale = 1.5f;  starXOffset = 2.0f; }
+    else if (champion.starLevel == 2) { starScale = 2.85f; starXOffset = 2.0f; }
+    else if (champion.starLevel == 3) { starScale = 2.5f; starXOffset = 15.0f; }
+
+    float targetH = height * starScale;
+    float aspect = (float)star.width / (float)star.height;
+    float targetW = targetH * aspect;
+
+    float stackTop = bar.y;
+    float stackBottom = manaBar.y + manaBar.height;
+    float stackMidY = (stackTop + stackBottom) * 0.5f;
+
+    Rectangle starSource = {0, 0, (float)star.width, (float)star.height};
+    Rectangle starDest = {bar.x - targetW + starXOffset, stackMidY - targetH/2, targetW, targetH};
+    DrawTexturePro(star, starSource, starDest, {0,0}, 0.0f, WHITE);
+
     BeginMode3D(camera);
+
+}
+
+string BoardUI::GetItemName(const Item& item) {
+    if (holds_alternative<int>(item)) {
+        int id = get<int>(item);
+        auto it = Set18::itemComponents.find(id);
+        return it != Set18::itemComponents.end() ? it->second : "";
+    }
+
+    pair<int, int> ids = get<pair<int, int>>(item);
+    auto it = Set18::completedItems.find(ids);
+    return it != Set18::completedItems.end() ? it->second : "";
+}
+
+Texture2D* BoardUI::GetItemTexture(const Item& item) {
+    string itemName = GetItemName(item);
+    if (itemName.empty()) return nullptr;
+
+    auto existing = itemTextures.find(itemName);
+
+    if (existing != itemTextures.end()) {
+        return existing->second.id != 0 ? &existing->second : nullptr;
+    }
+
+    string assetName = itemName;
+
+    for (char& ch : assetName) {
+        if (ch == ' ') ch = '_';
+    }
+
+    string path = "assets/Set18/items/120px-" + assetName + "_TFT_item.png";
+
+    if (!FileExists(path.c_str())) {
+        TraceLog(LOG_WARNING, "Missing item texture: %s", path.c_str());
+        itemTextures[itemName] = Texture2D{};
+        return nullptr;
+    }
+
+    Texture2D texture = LoadTexture(path.c_str());
+    SetTextureFilter(texture, TEXTURE_FILTER_BILINEAR);
+
+    itemTextures[itemName] = texture;
+    return &itemTextures[itemName];
 }

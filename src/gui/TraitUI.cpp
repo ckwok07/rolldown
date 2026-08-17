@@ -26,6 +26,11 @@ void TraitUI::shutdown() {
 
     traitFont = {};
     uiFont = {};
+    for (auto& [name, texture] : itemTextures) {
+        if (texture.id != 0) UnloadTexture(texture);
+    }
+
+    itemTextures.clear();
 }
 
 Rectangle TraitUI::TraitBarRect() {

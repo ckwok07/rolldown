@@ -127,13 +127,19 @@ void App::HandleDragRelease(int hoveredBench, int hoveredRow, int hoveredCol, in
     if (drag.GetState().payload == DragPayload::Item) {
         const SlotRef source = drag.GetState().source;
 
-        if (source.zone == Zone::Inventory && hoveredItem != -1 && hoveredItem < engine.gamestate.items.size() && hoveredItem != source.index) {
-            if (drag.GetState().holdReady) {
-                if (!engine.combine(source.index, hoveredItem)) {
+        if (source.zone == Zone::Inventory) {
+            if (hoveredBench != -1 && engine.gamestate.bench[hoveredBench].id != 0) {
+                engine.slamBench(source.index, hoveredBench);
+            } else if (hoveredRow != -1 && hoveredCol != -1 && engine.gamestate.board[hoveredRow][hoveredCol].id != 0) {
+                engine.slamBoard(source.index, {hoveredRow, hoveredCol});
+            } else if (hoveredItem != -1 && hoveredItem < engine.gamestate.items.size() && hoveredItem != source.index) {
+                if (drag.GetState().holdReady) {
+                    if (!engine.combine(source.index, hoveredItem)) {
+                        std::swap(engine.gamestate.items[source.index], engine.gamestate.items[hoveredItem]);
+                    }
+                } else {
                     std::swap(engine.gamestate.items[source.index], engine.gamestate.items[hoveredItem]);
                 }
-            } else {
-                std::swap(engine.gamestate.items[source.index], engine.gamestate.items[hoveredItem]);
             }
         }
     }
