@@ -15,6 +15,12 @@ void ShopUI::init() {
     traitFont = LoadFontEx("assets/Fonts/Spiegel.otf", 32, 0, 0);
     uiFont = LoadFontEx("assets/Fonts/Beaufort.otf", 32, 0, 0);
     SetTextureFilter(traitFont.texture, TEXTURE_FILTER_BILINEAR);
+
+    for (int i = 0; i < 5; i++) {
+        string path = "assets/global/" + to_string(i + 1) + "cost.png";
+        costIcons[i] = LoadTexture(path.c_str());
+        SetTextureFilter(costIcons[i], TEXTURE_FILTER_BILINEAR);
+    }
 }
 
 void ShopUI::shutdown() {
@@ -25,6 +31,10 @@ void ShopUI::shutdown() {
     }
     traitFont = {};
     uiFont = {};
+
+    for (int i = 0; i < 5; i++) {
+        if (costIcons[i].id != 0) UnloadTexture(costIcons[i]);
+    }
 }
 
 static Color CostTierColor(int cost) {
@@ -169,6 +179,19 @@ void ShopUI::DrawShopIcon(Rectangle rect, Champion& champion, bool highlighted, 
         if (splash != nullptr) {
             DrawTextureCover(*splash, artRect, WHITE);
             DrawRectangleLinesEx(artRect, 1.5f, BLACK);   // thin border around the splash art
+        }
+
+        Texture2D& costIcon = costIcons[champion.cost - 1];
+
+        if (costIcon.id != 0) {
+            float iconScale = 0.55f;
+            float iconW = rect.width * iconScale;
+            float iconH = iconW * ((float)costIcon.height / costIcon.width);
+
+            Rectangle source = {0, 0, (float)costIcon.width, (float)costIcon.height};
+            Rectangle destination = {rect.x + (rect.width - iconW) / 2.0f, rect.y, iconW, iconH};
+
+            DrawTexturePro(costIcon, source, destination, {0, 0}, 0.0f, WHITE);
         }
 
         int traitFontSize = 15;

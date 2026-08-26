@@ -17,6 +17,7 @@ public:
     std::unordered_map<std::string, Texture2D> splashTextures;
     void init();
     void shutdown();
+    Texture2D costIcons[5] = {};
 
     Texture2D* GetChampionSplash(const std::string& championName);
     void DrawTextureCover(Texture2D texture, Rectangle destination, Color tint = WHITE);
