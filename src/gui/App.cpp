@@ -357,6 +357,14 @@ void App::run() {
         line(TextFormat("hover row:%d col:%d bench:%d shop:%d", hoveredRow, hoveredCol, hoveredBench, hoveredShop));
         line(TextFormat("drag state:%d zone:%d index:%d row:%d col:%d", (int)drag.GetState().phase, (int)drag.GetState().source.zone, drag.GetState().source.index, drag.GetState().source.row, drag.GetState().source.col));
         line(TextFormat("hold time: %.2f ready: %d target: %d", drag.GetState().holdTime, drag.GetState().holdReady, drag.GetState().holdTarget.index));
+        line(TextFormat(
+            "shopStarUppable: [%d, %d, %d, %d, %d]",
+            gs.shopStarUppable[0],
+            gs.shopStarUppable[1],
+            gs.shopStarUppable[2],
+            gs.shopStarUppable[3],
+            gs.shopStarUppable[4]
+        ));
         EndDrawing();
 
     }

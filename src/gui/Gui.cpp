@@ -125,6 +125,7 @@ void GUI::run() {
                 }
             }
         }
+        ImGui::Separator();
         ImGui::End();
         // debug end
 

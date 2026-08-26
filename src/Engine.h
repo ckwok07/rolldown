@@ -91,6 +91,6 @@ private:
     int reforgeComponent(int old, mt19937& rng);
     void checkStarUp();
 
-    bool wouldStarUp(Champion champ);
+    int wouldStarUp(Champion champ);
     bool highlight(Champion champ);
 };

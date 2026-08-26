@@ -61,7 +61,8 @@ void Engine::initGameState(SetId set) {
 
     gamestate.bench[0] = {1, "Akali", 1, 1, {20, 1, 28}, {}};
     gamestate.bench[1] = {1, "Akali", 1, 2, {20, 1, 28}, {}};
-    gamestate.bench[2] = {1, "Akali", 1, 3, {20, 1, 28}, {}};
+    gamestate.bench[2] = {1, "Akali", 1, 2, {20, 1, 28}, {}};
+    gamestate.bench[3] = {1, "Akali", 1, 1, {20, 1, 28}, {}};
 }
 
 // secondary initgamestate
@@ -846,18 +847,38 @@ void Engine::checkStarUp() {
     }
 }
 
-bool Engine::wouldStarUp(Champion champ) {
-    if (champ == nullChamp) return false;
-    int count = 0;
+int Engine::wouldStarUp(Champion champ) {
+    if (champ == nullChamp) return 0;
+
+    int counts[4] = {0, 0, 0, 0};
+
     for (int i = 0; i < 9; i++) {
-        if (gamestate.bench[i].id == champ.id && gamestate.bench[i].starLevel == champ.starLevel) count++;
-    }
-    for (int row = 0; row < 4; row++) {
-        for (int col = 0; col < 7; col++) {
-            if (gamestate.board[row][col].id == champ.id && gamestate.board[row][col].starLevel == champ.starLevel) count++;
+        if (gamestate.bench[i].id == champ.id) {
+            counts[gamestate.bench[i].starLevel]++;
         }
     }
-    return count == 2;
+
+    for (int row = 0; row < 4; row++) {
+        for (int col = 0; col < 7; col++) {
+            if (gamestate.board[row][col].id == champ.id) {
+                counts[gamestate.board[row][col].starLevel]++;
+            }
+        }
+    }
+
+    counts[champ.starLevel]++;
+
+    int result = 0;
+
+    for (int star = champ.starLevel; star < 3; star++) {
+        if (counts[star] < 3) break;
+
+        counts[star] -= 3;
+        counts[star + 1]++;
+        result = star + 1;
+    }
+
+    return result;
 }
 
 bool Engine::highlight(Champion champ) {
