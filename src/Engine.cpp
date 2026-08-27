@@ -50,6 +50,10 @@ void Engine::initGameState(SetId set) {
     gamestate.items.push_back(6);
     gamestate.items.push_back(10);
     gamestate.items.push_back(6);
+    gamestate.items.push_back(10);
+    gamestate.items.push_back(6);
+    gamestate.items.push_back(10);
+    gamestate.items.push_back(6);
     //
 
     gamestate.gold = 500;
@@ -805,26 +809,54 @@ void Engine::checkStarUp() {
             }
         }
 
-        vector<variant<int, pair<int, int>>> newItems;
+        vector<Item> allItems;
 
-        for (auto& item : completedBoard) {
-            if (newItems.size() >= 3) break;
-            newItems.push_back(item);
+        // existing completed items keep priority
+        for (auto& item : completedBoard) allItems.push_back(item);
+        for (auto& item : completedBench) allItems.push_back(item);
+
+        // put all components together
+        vector<Item> components;
+        for (auto& item : componentBoard) components.push_back(item);
+        for (auto& item : componentBench) components.push_back(item);
+
+        // combine components in pairs
+        for (int i = 0; i + 1 < components.size(); i += 2) {
+            int a = get<int>(components[i]);
+            int b = get<int>(components[i + 1]);
+
+            if (a > b) swap(a, b);
+
+            allItems.push_back(make_pair(a, b));
         }
 
-        for (auto& item : completedBench) {
-            if (newItems.size() >= 3) break;
-            newItems.push_back(item);
+        // odd component left over
+        if (components.size() % 2 == 1) {
+            allItems.push_back(components.back());
         }
 
-        for (auto& item : componentBoard) {
-            if (newItems.size() >= 3) break;
-            newItems.push_back(item);
-        }
+        // first 3 stay on champion, extras pop off
+        vector<Item> newItems;
 
-        for (auto& item : componentBench) {
-            if (newItems.size() >= 3) break;
-            newItems.push_back(item);
+        for (int i = 0; i < allItems.size(); i++) {
+            if (i < 3) {
+                newItems.push_back(allItems[i]);
+            } else {
+                bool placed = false;
+
+                for (int j = 0; j < gamestate.items.size(); j++) {
+                    if (holds_alternative<int>(gamestate.items[j]) &&
+                        get<int>(gamestate.items[j]) == -1) {
+                        gamestate.items[j] = allItems[i];
+                        placed = true;
+                        break;
+                    }
+                }
+
+                if (!placed) {
+                    gamestate.items.push_back(allItems[i]);
+                }
+            }
         }
 
         Champion& best = getChampAt(bestLocation.first, bestLocation.second);
