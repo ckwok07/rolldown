@@ -365,6 +365,14 @@ void App::run() {
             gs.shopStarUppable[3],
             gs.shopStarUppable[4]
         ));
+        line(TextFormat(
+            "shopInTeamBuilder: [%d, %d, %d, %d, %d]",
+            gs.shopInTeamBuilder[0] ? 1 : 0,
+            gs.shopInTeamBuilder[1] ? 1 : 0,
+            gs.shopInTeamBuilder[2] ? 1 : 0,
+            gs.shopInTeamBuilder[3] ? 1 : 0,
+            gs.shopInTeamBuilder[4] ? 1 : 0
+        ));
         EndDrawing();
 
     }

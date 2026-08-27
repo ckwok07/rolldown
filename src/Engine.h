@@ -81,6 +81,11 @@ public:
     void combineItems(Champion& champ);
     GameState gamestate;
 
+    // teambuilder
+    bool addToTeamBuilder(Champion champ);
+    void removeFromTeamBuilder(int index);
+    bool inTeamBuilder(Champion champ);
+
 
 private:
     mt19937 rng;

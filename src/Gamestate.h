@@ -46,8 +46,13 @@ struct GameState {
     vector<Champion> shop = vector<Champion>(5);
     vector<bool> shopSameChampion = vector<bool>(5, false);
     vector<int> shopStarUppable = vector<int>(5, 0);
+    vector<bool> shopInTeamBuilder = vector<bool>(5, false);
+
     bool shoplocked = false;
     unordered_map<int,int> pool;
+
+    // teambuilder
+    vector<Champion> teambuilder = vector<Champion>(10, nullChamp);
 
     // miscellaneous
     // pris ticket

@@ -63,6 +63,8 @@ void Engine::initGameState(SetId set) {
     gamestate.bench[1] = {1, "Akali", 1, 2, {20, 1, 28}, {}};
     gamestate.bench[2] = {1, "Akali", 1, 2, {20, 1, 28}, {}};
     gamestate.bench[3] = {1, "Akali", 1, 1, {20, 1, 28}, {}};
+
+    gamestate.teambuilder[0] = {42, "Ahri", 4, 1, {6, 32}, {}};
 }
 
 // secondary initgamestate
@@ -150,6 +152,7 @@ void Engine::initShop() {
     for (int i = 0; i < 5; i++) {
         gamestate.shopSameChampion[i] = highlight(gamestate.shop[i]);
         gamestate.shopStarUppable[i] = wouldStarUp(gamestate.shop[i]);
+        gamestate.shopInTeamBuilder[i] = inTeamBuilder(gamestate.shop[i]);
     }
 }
 
@@ -257,6 +260,7 @@ void Engine::roll() {
     for (int i = 0; i < 5; i++) {
         gamestate.shopSameChampion[i] = highlight(gamestate.shop[i]);
         gamestate.shopStarUppable[i] = wouldStarUp(gamestate.shop[i]);
+        gamestate.shopInTeamBuilder[i] = inTeamBuilder(gamestate.shop[i]);
     }
 }
 
@@ -687,6 +691,7 @@ void Engine::updateGamestate() {
     for (int i = 0; i < 5; i++) {
         gamestate.shopSameChampion[i] = highlight(gamestate.shop[i]);
         gamestate.shopStarUppable[i] = wouldStarUp(gamestate.shop[i]);
+        gamestate.shopInTeamBuilder[i] = inTeamBuilder(gamestate.shop[i]);
     }
 }
 
@@ -927,4 +932,34 @@ void Engine::combineItems(Champion& champ) {
 
     champ.items[firstIndex] = combined;
     champ.items.erase(champ.items.begin() + secondIndex);
+}
+
+bool Engine::addToTeamBuilder(Champion champ) {
+    for (int i = 0; i < gamestate.teambuilder.size(); i++) {
+        if (gamestate.teambuilder[i] == nullChamp) {
+            gamestate.teambuilder[i] = champ;
+            updateGamestate();
+            return true;
+        }
+    }
+    return false;
+}
+
+void Engine::removeFromTeamBuilder(int index) {
+    gamestate.teambuilder[index] = nullChamp;
+    updateGamestate();
+}
+
+bool Engine::inTeamBuilder(Champion champ) {
+
+    if (champ == nullChamp) return false;
+
+
+    for (int i = 0; i < gamestate.teambuilder.size(); i++) {
+        if (gamestate.teambuilder[i].id == champ.id) {
+            return true;
+        }
+    }
+
+    return false;
 }

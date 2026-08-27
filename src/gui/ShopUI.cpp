@@ -150,7 +150,7 @@ void ShopUI::DrawTextureCover( Texture2D texture, Rectangle destination, Color t
     DrawTexturePro( texture, source, destination, { 0.0f, 0.0f }, 0.0f, tint);
 }
 
-void ShopUI::DrawShopIcon(Rectangle rect, Champion& champion, bool highlighted, bool sourceHidden, bool samechamps, int stars) {
+void ShopUI::DrawShopIcon(Rectangle rect, Champion& champion, bool highlighted, bool sourceHidden, bool samechamps, int stars, bool inTeamBuilder) {
     // card border
     float cardBorder = 12.0f;
     DrawRectangleLinesEx(rect, cardBorder, BLACK);
@@ -196,10 +196,12 @@ void ShopUI::DrawShopIcon(Rectangle rect, Champion& champion, bool highlighted, 
 
         if (stars == 2) {
             DrawRectangle(rect.x + 5, rect.y + 5, 20, 20, RED);
-        }
-
-        if (stars == 3) {
-            DrawRectangle(rect.x + 5, rect.y + 5, 20, 20, GREEN);
+        } else if (stars == 3) {
+            DrawRectangle(rect.x + 5, rect.y + 5, 20, 20, YELLOW);
+        } else if (inTeamBuilder) {
+            Rectangle teamRect = {artRect.x + 6.0f, artRect.y + 6.0f, rect.width * 0.16f, rect.height * 0.08f};
+            DrawRectangleRec(teamRect, GREEN);
+            DrawRectangleLinesEx(teamRect, 1.5f, BLACK);
         }
 
         int traitFontSize = 15;
@@ -238,7 +240,7 @@ void ShopUI::DrawShopIcon(Rectangle rect, Champion& champion, bool highlighted, 
         DrawTextEx(traitFont, costText, {infoRect.x + infoRect.width - costSize.x - 6.0f, infoRect.y + (infoRect.height - costSize.y) / 2.0f + 1.0f}, 18, 1.0f, WHITE);
     }
 
-    if (samechamps) {
+    if (samechamps || inTeamBuilder) {
         float pulse = (sinf((float)GetTime() * 2.0f) + 1.0f) / 2.0f;
         float alpha = 0.08f + pulse * 0.20f;
 
@@ -628,7 +630,7 @@ void ShopUI::DrawShop(Engine& engine, int hoveredShop, bool hoverXp, bool hoverR
                             dragState.source.zone == Zone::Shop &&
                             dragState.source.index == i;
 
-        DrawShopIcon(rect, champion, i == hoveredShop, sourceHidden, engine.gamestate.shopSameChampion[i], engine.gamestate.shopStarUppable[i]);
+        DrawShopIcon(rect, champion, i == hoveredShop, sourceHidden, engine.gamestate.shopSameChampion[i], engine.gamestate.shopStarUppable[i], engine.gamestate.shopInTeamBuilder[i]);
     }
 
     if (dragState.phase == DragPhase::Dragging && dragState.payload == DragPayload::Champion && dragState.source.zone == Zone::Shop) {
@@ -639,7 +641,7 @@ void ShopUI::DrawShop(Engine& engine, int hoveredShop, bool hoverXp, bool hoverR
         Champion& champion = shop[dragState.source.index];
         Color tierColor = CostTierColor(champion.cost);
 
-        DrawShopIcon(ghost, champion, true, false, false, engine.gamestate.shopStarUppable[dragState.source.index]);
+        DrawShopIcon(ghost, champion, true, false, false, engine.gamestate.shopStarUppable[dragState.source.index], engine.gamestate.shopInTeamBuilder[dragState.source.index]);
     }
 
     if (dragState.phase == DragPhase::Dragging &&
