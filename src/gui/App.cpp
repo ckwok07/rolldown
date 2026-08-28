@@ -373,6 +373,9 @@ void App::run() {
             gs.shopInTeamBuilder[3] ? 1 : 0,
             gs.shopInTeamBuilder[4] ? 1 : 0
         ));
+
+        teambuilderUI.drawTeambuilder();
+        
         EndDrawing();
 
     }

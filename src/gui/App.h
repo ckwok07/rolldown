@@ -8,6 +8,7 @@
 #include "ShopUI.h"
 #include "TraitUI.h"
 #include "BoardUI.h"
+#include "TeambuilderUI.h"
 
 class App
 {
@@ -27,6 +28,9 @@ private:
 
     // board
     BoardUI board;
+
+    // teambuilder
+    TeambuilderUI teambuilderUI;
 
     void HandleDragPress(int hoveredShop, int hoveredBench, int hoveredRow, int hoveredCol);
     void HandleDragRelease(int hoveredBench, int hoveredRow, int hoveredCol, int hoveredItem);

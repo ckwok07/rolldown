@@ -17,6 +17,7 @@ add_executable(rolldown
     src/gui/Drag.cpp
     src/gui/ShopUI.cpp
     src/gui/TraitUI.cpp
+    src/gui/TeambuilderUI.cpp
     src/Scripts.cpp
     src/gui/BoardUI.cpp
     src/Teambuilder.cpp
