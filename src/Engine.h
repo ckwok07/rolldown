@@ -2,6 +2,7 @@
 
 #include "Gamestate.h"
 #include "Champion.h"
+#include "Teambuilder.h"
 #include <random>
 #include "SetId.h"
 
@@ -82,10 +83,8 @@ public:
     GameState gamestate;
 
     // teambuilder
-    bool addToTeamBuilder(Champion champ);
-    void removeFromTeamBuilder(int index);
-    bool inTeamBuilder(Champion champ);
-
+    void inTeamBuilder();
+    Teambuilder teambuilder;
 
 private:
     mt19937 rng;

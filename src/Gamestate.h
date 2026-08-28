@@ -51,9 +51,6 @@ struct GameState {
     bool shoplocked = false;
     unordered_map<int,int> pool;
 
-    // teambuilder
-    vector<Champion> teambuilder = vector<Champion>(10, nullChamp);
-
     // miscellaneous
     // pris ticket
 

@@ -19,6 +19,7 @@ add_executable(rolldown
     src/gui/TraitUI.cpp
     src/Scripts.cpp
     src/gui/BoardUI.cpp
+    src/Teambuilder.cpp
 )
 
 target_include_directories(rolldown PRIVATE

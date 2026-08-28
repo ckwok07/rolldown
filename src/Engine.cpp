@@ -30,7 +30,6 @@ void Engine::shutdown() {
 // init game state
 void Engine::initGameState(SetId set) {
     gamestate = GameState{};
-    
     gamestate.activeSet = set;
     if (set == SetId::Set17) {
         gamestate.activeChampions = &Set17::ALL_CHAMPIONS;
@@ -39,6 +38,10 @@ void Engine::initGameState(SetId set) {
         gamestate.activeChampions = &Set18::ALL_CHAMPIONS;
         gamestate.setState = Set18State{};
     }
+
+    teambuilder.init([this]() {
+        inTeamBuilder();
+    });
 
     //
 
@@ -70,8 +73,6 @@ void Engine::initGameState(SetId set) {
     gamestate.board[1][0] = {3, "Cinderling", 1, 1, {29, 19}, {pair<int,int>{7,10}, pair<int,int>{8,8}, pair<int,int>{8,9}}};
     gamestate.board[1][1] = {4, "Karma", 1, 1, {6, 32}, {pair<int,int>{8,10}, pair<int,int>{9,9}, pair<int,int>{9,10}}};
     gamestate.board[1][2] = {5, "Kobuko", 1, 1, {33, 8}, {pair<int,int>{10,10}}};
-
-    gamestate.teambuilder[0] = {42, "Ahri", 4, 1, {6, 32}, {}};
 }
 
 // secondary initgamestate
@@ -87,6 +88,10 @@ void Engine::initGameState(SetId set, int gold, int level) {
         gamestate.activeChampions = &Set18::ALL_CHAMPIONS;
         gamestate.setState = Set18State{};
     }
+
+    teambuilder.init([this]() {
+        inTeamBuilder();
+    });
 
     gamestate.gold = gold;
     gamestate.level = level;
@@ -159,8 +164,8 @@ void Engine::initShop() {
     for (int i = 0; i < 5; i++) {
         gamestate.shopSameChampion[i] = highlight(gamestate.shop[i]);
         gamestate.shopStarUppable[i] = wouldStarUp(gamestate.shop[i]);
-        gamestate.shopInTeamBuilder[i] = inTeamBuilder(gamestate.shop[i]);
     }
+    inTeamBuilder();
 }
 
 Champion Engine::getChamp(int cost) {
@@ -267,8 +272,9 @@ void Engine::roll() {
     for (int i = 0; i < 5; i++) {
         gamestate.shopSameChampion[i] = highlight(gamestate.shop[i]);
         gamestate.shopStarUppable[i] = wouldStarUp(gamestate.shop[i]);
-        gamestate.shopInTeamBuilder[i] = inTeamBuilder(gamestate.shop[i]);
     }
+
+    inTeamBuilder();
 }
 
 // buy unit
@@ -718,8 +724,8 @@ void Engine::updateGamestate() {
     for (int i = 0; i < 5; i++) {
         gamestate.shopSameChampion[i] = highlight(gamestate.shop[i]);
         gamestate.shopStarUppable[i] = wouldStarUp(gamestate.shop[i]);
-        gamestate.shopInTeamBuilder[i] = inTeamBuilder(gamestate.shop[i]);
     }
+    inTeamBuilder();
 }
 
 void Engine::checkStarUp() {
@@ -989,32 +995,20 @@ void Engine::combineItems(Champion& champ) {
     champ.items.erase(champ.items.begin() + secondIndex);
 }
 
-bool Engine::addToTeamBuilder(Champion champ) {
-    for (int i = 0; i < gamestate.teambuilder.size(); i++) {
-        if (gamestate.teambuilder[i] == nullChamp) {
-            gamestate.teambuilder[i] = champ;
-            updateGamestate();
-            return true;
+void Engine::inTeamBuilder() {
+    for (int i = 0; i < gamestate.shop.size(); i++) {
+        gamestate.shopInTeamBuilder[i] = false;
+
+        Champion champ = gamestate.shop[i];
+
+        if (champ == nullChamp) continue;
+        if (teambuilder.active == -1) continue;
+
+        for (int j = 0; j < teambuilder.teams[teambuilder.active].size(); j++) {
+            if (teambuilder.teams[teambuilder.active][j].id == champ.id) {
+                gamestate.shopInTeamBuilder[i] = true;
+                break;
+            }
         }
     }
-    return false;
-}
-
-void Engine::removeFromTeamBuilder(int index) {
-    gamestate.teambuilder[index] = nullChamp;
-    updateGamestate();
-}
-
-bool Engine::inTeamBuilder(Champion champ) {
-
-    if (champ == nullChamp) return false;
-
-
-    for (int i = 0; i < gamestate.teambuilder.size(); i++) {
-        if (gamestate.teambuilder[i].id == champ.id) {
-            return true;
-        }
-    }
-
-    return false;
 }
