@@ -190,6 +190,9 @@ bool App::GetMouseGroundPosition(Vector3& position) const {
 }
 
 void App::run() {
+        // button pressing
+        bool rerollPressed = false;
+        bool xpPressed = false;
     while (!WindowShouldClose()) {
         // get mouse position
         int hoveredRow = -1;
@@ -293,15 +296,21 @@ void App::run() {
         EndMode3D();
 
         // shop
-        shop.DrawShop(engine, hoveredShop, hoverXp, hoverReroll, drag.GetState(), GetDraggedChampion());
+        shop.DrawShop(engine, hoveredShop, hoverXp, hoverReroll, drag.GetState(), GetDraggedChampion(), xpPressed, rerollPressed);
         traits.DrawTraits(engine, drag);
 
         // xp and reroll mechanics
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoverXp) {
-            engine.levelup();
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            if (hoverXp) xpPressed = true;
+            if (hoverReroll) rerollPressed = true;
         }
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoverReroll) {
-            engine.roll();
+
+        if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
+            if (xpPressed && hoverXp) engine.levelup();
+            if (rerollPressed && hoverReroll) engine.roll();
+
+            xpPressed = false;
+            rerollPressed = false;
         }
 
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && hoverLock) {
@@ -375,7 +384,7 @@ void App::run() {
         ));
 
         teambuilderUI.drawTeambuilder();
-        
+
         EndDrawing();
 
     }

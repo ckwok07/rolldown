@@ -41,10 +41,10 @@ public:
     void DrawProbabilities(Engine& engine);
     void DrawLock(bool locked);
     void DrawGold(int gold);
-    void DrawXp(bool hoverXp);
-    void DrawReroll(bool hoverReroll);
+    void DrawXp(bool hoverXp, bool xpPressed);
+    void DrawReroll(bool hoverReroll, bool rerollPressed);
 
-    void DrawShop(Engine& engine, int hoveredShop, bool hoverXp, bool hoverReroll, const DragState& dragState, const Champion* champion);
+    void DrawShop(Engine& engine, int hoveredShop, bool hoverXp, bool hoverReroll, const DragState& dragState, const Champion* champion, bool xpPressed, bool rerollPressed);
 
     void DrawXpIndicator(const GameState& gamestate);
 

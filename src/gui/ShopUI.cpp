@@ -518,7 +518,7 @@ void ShopUI::DrawGold(int gold) {
     DrawTextEx(uiFont, goldText.c_str(), {startX + circleRadius * 2.0f + gap, centerY - textSize.y / 2.0f}, fontSize, 0.0f, WHITE);
 }
 
-void ShopUI::DrawXp(bool hoverXp) {
+void ShopUI::DrawXp(bool hoverXp, bool xpPressed) {
     Rectangle rect = ShopXpRect();
     DrawRectangleRec(rect, BLACK);
 
@@ -536,18 +536,6 @@ void ShopUI::DrawXp(bool hoverXp) {
     Rectangle buyxppart = {inside.x + inset, inside.y + inset, inside.width - inset * 2.0f, inside.height - inset * 2.0f};
     DrawRectangleRec(buyxppart, {19,32,42,255});
 
-    float textSize = buyxppart.height * 0.30f;
-    DrawTextEx(uiFont, "Buy XP", {buyxppart.x + buyxppart.width * 0.05f, buyxppart.y + buyxppart.height * 0.18f}, textSize, 0.0f, WHITE);
-
-    float goldX = buyxppart.x + buyxppart.width * 0.08f;
-    float goldY = buyxppart.y + buyxppart.height * 0.73f;
-    float goldRadius = buyxppart.height * 0.07f;
-
-    DrawCircle(goldX, goldY, goldRadius, {180, 157, 100, 255});
-
-    float goldTextSize = buyxppart.height * 0.22f;
-    DrawTextEx(uiFont, "4", {goldX + goldRadius * 1.8f, goldY - goldTextSize / 2.0f}, goldTextSize, 0.0f, WHITE);
-
     Rectangle iconRect = { buyxppart.x + buyxppart.width * 0.68f, buyxppart.y, buyxppart.width * 0.32f, buyxppart.height };
     DrawRectangleRec(iconRect, {34, 59, 74, 255});
 
@@ -559,9 +547,35 @@ void ShopUI::DrawXp(bool hoverXp) {
     Vector2 triangleBottomRight = {iconRect.x, iconRect.y + iconRect.height};
 
     DrawTriangle(triangleTopLeft, triangleBottomRight, triangleTopRight, {34, 59, 74, 255});
+
+    if (xpPressed) {
+        Rectangle top = {rect.x, rect.y, rect.width, rect.height / 2.0f};
+        Rectangle bottom = {rect.x, rect.y + rect.height / 2.0f, rect.width, rect.height / 2.0f};
+
+        DrawRectangleGradientEx(top, Fade(BLACK, 0.35f), Fade(BLACK, 0.45f), Fade(BLACK, 0.45f), Fade(BLACK, 0.35f));
+        DrawRectangleGradientEx(bottom, Fade(BLACK, 0.45f), Fade(BLACK, 0.35f), Fade(BLACK, 0.35f), Fade(BLACK, 0.45f));
+    } else if (hoverXp) {
+        Rectangle top = {rect.x, rect.y, rect.width, rect.height / 2.0f};
+        Rectangle bottom = {rect.x, rect.y + rect.height / 2.0f, rect.width, rect.height / 2.0f};
+
+        DrawRectangleGradientEx(top, Fade(WHITE, 0.05f), Fade(WHITE, 0.15f), Fade(WHITE, 0.15f), Fade(WHITE, 0.05f));
+        DrawRectangleGradientEx(bottom, Fade(WHITE, 0.15f), Fade(WHITE, 0.05f), Fade(WHITE, 0.05f), Fade(WHITE, 0.15f));
+    }
+
+    float textSize = buyxppart.height * 0.30f;
+    DrawTextEx(uiFont, "Buy XP", {buyxppart.x + buyxppart.width * 0.05f, buyxppart.y + buyxppart.height * 0.18f}, textSize, 0.0f, WHITE);
+
+    float goldX = buyxppart.x + buyxppart.width * 0.08f;
+    float goldY = buyxppart.y + buyxppart.height * 0.73f;
+    float goldRadius = buyxppart.height * 0.07f;
+
+    DrawCircle(goldX, goldY, goldRadius, {180, 157, 100, 255});
+
+    float goldTextSize = buyxppart.height * 0.22f;
+    DrawTextEx(uiFont, "4", {goldX + goldRadius * 1.8f, goldY - goldTextSize / 2.0f}, goldTextSize, 0.0f, WHITE);
 }
 
-void ShopUI::DrawReroll(bool hoverReroll) {
+void ShopUI::DrawReroll(bool hoverReroll, bool rerollPressed) {
     Rectangle rect = ShopRerollRect();
     DrawRectangleRec(rect, BLACK);
 
@@ -579,18 +593,6 @@ void ShopUI::DrawReroll(bool hoverReroll) {
     Rectangle buyxppart = {inside.x + inset, inside.y + inset, inside.width - inset * 2.0f, inside.height - inset * 2.0f};
     DrawRectangleRec(buyxppart, {31,33,24,255});
 
-    float textSize = buyxppart.height * 0.30f;
-    DrawTextEx(uiFont, "Refresh", {buyxppart.x + buyxppart.width * 0.05f, buyxppart.y + buyxppart.height * 0.18f}, textSize, 0.0f, WHITE);
-
-    float goldX = buyxppart.x + buyxppart.width * 0.08f;
-    float goldY = buyxppart.y + buyxppart.height * 0.73f;
-    float goldRadius = buyxppart.height * 0.07f;
-
-    DrawCircle(goldX, goldY, goldRadius, {180, 157, 100, 255});
-
-    float goldTextSize = buyxppart.height * 0.22f;
-    DrawTextEx(uiFont, "2", {goldX + goldRadius * 1.8f, goldY - goldTextSize / 2.0f}, goldTextSize, 0.0f, WHITE);
-
     Rectangle iconRect = { buyxppart.x + buyxppart.width * 0.68f, buyxppart.y, buyxppart.width * 0.32f, buyxppart.height };
     DrawRectangleRec(iconRect, {70, 64, 43, 255});
 
@@ -603,16 +605,41 @@ void ShopUI::DrawReroll(bool hoverReroll) {
 
     DrawTriangle(triangleTopLeft, triangleBottomRight, triangleTopRight, {70, 64, 43, 255});
 
+    if (rerollPressed) {
+        Rectangle top = {rect.x, rect.y, rect.width, rect.height / 2.0f};
+        Rectangle bottom = {rect.x, rect.y + rect.height / 2.0f, rect.width, rect.height / 2.0f};
+
+        DrawRectangleGradientEx(top, Fade(BLACK, 0.35f), Fade(BLACK, 0.45f), Fade(BLACK, 0.45f), Fade(BLACK, 0.35f));
+        DrawRectangleGradientEx(bottom, Fade(BLACK, 0.45f), Fade(BLACK, 0.35f), Fade(BLACK, 0.35f), Fade(BLACK, 0.45f));
+    } else if (hoverReroll) {
+        Rectangle top = {rect.x, rect.y, rect.width, rect.height / 2.0f};
+        Rectangle bottom = {rect.x, rect.y + rect.height / 2.0f, rect.width, rect.height / 2.0f};
+
+        DrawRectangleGradientEx(top, Fade(WHITE, 0.05f), Fade(WHITE, 0.15f), Fade(WHITE, 0.15f), Fade(WHITE, 0.05f));
+        DrawRectangleGradientEx(bottom, Fade(WHITE, 0.15f), Fade(WHITE, 0.05f), Fade(WHITE, 0.05f), Fade(WHITE, 0.15f));
+    } 
+
+    float textSize = buyxppart.height * 0.30f;
+    DrawTextEx(uiFont, "Refresh", {buyxppart.x + buyxppart.width * 0.05f, buyxppart.y + buyxppart.height * 0.18f}, textSize, 0.0f, WHITE);
+
+    float goldX = buyxppart.x + buyxppart.width * 0.08f;
+    float goldY = buyxppart.y + buyxppart.height * 0.73f;
+    float goldRadius = buyxppart.height * 0.07f;
+
+    DrawCircle(goldX, goldY, goldRadius, {180, 157, 100, 255});
+
+    float goldTextSize = buyxppart.height * 0.22f;
+    DrawTextEx(uiFont, "2", {goldX + goldRadius * 1.8f, goldY - goldTextSize / 2.0f}, goldTextSize, 0.0f, WHITE);
 }
 
-void ShopUI::DrawShop(Engine& engine, int hoveredShop, bool hoverXp, bool hoverReroll, const DragState& dragState, const Champion* champion) {
+void ShopUI::DrawShop(Engine& engine, int hoveredShop, bool hoverXp, bool hoverReroll, const DragState& dragState, const Champion* champion, bool xpPressed, bool rerollPressed) {
     DrawShopVisual();
     DrawXpIndicator(engine.gamestate);
     DrawProbabilities(engine);
     DrawLock(engine.gamestate.shoplocked);
     DrawGold(engine.gamestate.gold);
-    DrawXp(hoverXp);
-    DrawReroll(hoverReroll);
+    DrawXp(hoverXp, xpPressed);
+    DrawReroll(hoverReroll, rerollPressed);
 
     // DrawShopTrapezoid();
     //DrawRectangleLinesEx(ShopBarRect(), 3.0f, SKYBLUE);
@@ -699,11 +726,15 @@ void ShopUI::DrawXpIndicator(const GameState& gamestate) {
     int currentXp = gamestate.xp;
     int threshold = levelthresholds[gamestate.level];
 
-    if (threshold == 0) return;
-
     Rectangle innerRect = InnerShopRect();
     Rectangle innerLevelRect = InnerLevelRect();
     Rectangle xp = ShopXpRect();
+
+    const char* levelText = TextFormat("Lvl. %d", gamestate.level);
+    Vector2 textSize = MeasureTextEx(uiFont, levelText, 20.0f, 1.0f);
+    DrawTextEx(uiFont, levelText, {innerLevelRect.x + 6.0f, innerLevelRect.y + (innerLevelRect.height - textSize.y) / 2.0f}, 20.0f, 1.0f, WHITE);
+
+    if (threshold == 0) return;
 
     float y = innerLevelRect.y + innerLevelRect.height + (innerRect.y - (innerLevelRect.y + innerLevelRect.height)) * 0.25f;
     float height = (innerRect.y - (innerLevelRect.y + innerLevelRect.height)) * 0.50f;
@@ -721,11 +752,6 @@ void ShopUI::DrawXpIndicator(const GameState& gamestate) {
 
         DrawRectangleRec({section.x, section.y, section.width * fill, section.height}, {115, 243, 245, 255});
     }
-
-    const char* levelText = TextFormat("Lvl. %d", gamestate.level);
-    Vector2 textSize = MeasureTextEx(uiFont, levelText, 20.0f, 1.0f);
-
-    DrawTextEx(uiFont, levelText, {innerLevelRect.x + 6.0f, innerLevelRect.y + (innerLevelRect.height - textSize.y) / 2.0f}, 20.0f, 1.0f, WHITE);
 
     const char* xpText = TextFormat("%d/%d", currentXp, threshold);
     Vector2 xpTextSize = MeasureTextEx(traitFont, xpText, 13.0f, 1.0f);
