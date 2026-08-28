@@ -41,20 +41,6 @@ void Engine::initGameState(SetId set) {
     }
 
     //
-    gamestate.items.push_back(10);
-    gamestate.items.push_back(6);
-    gamestate.items.push_back(3);
-    gamestate.items.push_back(10);
-    gamestate.items.push_back(6);
-    gamestate.items.push_back(10);
-    gamestate.items.push_back(6);
-    gamestate.items.push_back(10);
-    gamestate.items.push_back(6);
-    gamestate.items.push_back(10);
-    gamestate.items.push_back(6);
-    gamestate.items.push_back(10);
-    gamestate.items.push_back(6);
-    //
 
     gamestate.gold = 500;
     gamestate.level = 8;
@@ -63,10 +49,27 @@ void Engine::initGameState(SetId set) {
     initChampPool();
     initShop();
 
-    gamestate.bench[0] = {1, "Akali", 1, 1, {20, 1, 28}, {}};
-    gamestate.bench[1] = {1, "Akali", 1, 2, {20, 1, 28}, {}};
-    gamestate.bench[2] = {1, "Akali", 1, 2, {20, 1, 28}, {}};
-    gamestate.bench[3] = {1, "Akali", 1, 1, {20, 1, 28}, {}};
+    gamestate.bench[0] = {1, "Akali", 1, 1, {20, 1, 28}, {pair<int,int>{1,1}, pair<int,int>{1,2}, pair<int,int>{1,3}}};
+    gamestate.bench[1] = {2, "Camille", 1, 1, {10, 28}, {pair<int,int>{1,4}, pair<int,int>{1,5}, pair<int,int>{1,6}}};
+    gamestate.bench[2] = {3, "Cinderling", 1, 1, {29, 19}, {pair<int,int>{1,7}, pair<int,int>{1,8}, pair<int,int>{1,9}}};
+    gamestate.bench[3] = {4, "Karma", 1, 1, {6, 32}, {pair<int,int>{1,10}, pair<int,int>{2,2}, pair<int,int>{2,3}}};
+    gamestate.bench[4] = {5, "Kobuko", 1, 1, {33, 8}, {pair<int,int>{2,4}, pair<int,int>{2,5}, pair<int,int>{2,6}}};
+    gamestate.bench[5] = {6, "Leona", 1, 1, {31, 11}, {pair<int,int>{2,7}, pair<int,int>{2,8}, pair<int,int>{2,9}}};
+    gamestate.bench[6] = {7, "Ornn", 1, 1, {13, 21}, {pair<int,int>{2,10}, pair<int,int>{3,3}, pair<int,int>{3,4}}};
+    gamestate.bench[7] = {1, "Akali", 1, 1, {20, 1, 28}, {pair<int,int>{3,5}, pair<int,int>{3,6}, pair<int,int>{3,7}}};
+    gamestate.bench[8] = {2, "Camille", 1, 1, {10, 28}, {pair<int,int>{3,8}, pair<int,int>{3,9}, pair<int,int>{3,10}}};
+
+    gamestate.board[0][0] = {3, "Cinderling", 1, 1, {29, 19}, {pair<int,int>{4,4}, pair<int,int>{4,5}, pair<int,int>{4,6}}};
+    gamestate.board[0][1] = {4, "Karma", 1, 1, {6, 32}, {pair<int,int>{4,7}, pair<int,int>{4,8}, pair<int,int>{4,9}}};
+    gamestate.board[0][2] = {5, "Kobuko", 1, 1, {33, 8}, {pair<int,int>{4,10}, pair<int,int>{5,5}, pair<int,int>{5,6}}};
+    gamestate.board[0][3] = {6, "Leona", 1, 1, {31, 11}, {pair<int,int>{5,7}, pair<int,int>{5,8}, pair<int,int>{5,9}}};
+    gamestate.board[0][4] = {7, "Ornn", 1, 1, {13, 21}, {pair<int,int>{5,10}, pair<int,int>{6,6}, pair<int,int>{6,7}}};
+    gamestate.board[0][5] = {1, "Akali", 1, 1, {20, 1, 28}, {pair<int,int>{6,8}, pair<int,int>{6,9}, pair<int,int>{6,10}}};
+    gamestate.board[0][6] = {2, "Camille", 1, 1, {10, 28}, {pair<int,int>{7,7}, pair<int,int>{7,8}, pair<int,int>{7,9}}};
+
+    gamestate.board[1][0] = {3, "Cinderling", 1, 1, {29, 19}, {pair<int,int>{7,10}, pair<int,int>{8,8}, pair<int,int>{8,9}}};
+    gamestate.board[1][1] = {4, "Karma", 1, 1, {6, 32}, {pair<int,int>{8,10}, pair<int,int>{9,9}, pair<int,int>{9,10}}};
+    gamestate.board[1][2] = {5, "Kobuko", 1, 1, {33, 8}, {pair<int,int>{10,10}}};
 
     gamestate.teambuilder[0] = {42, "Ahri", 4, 1, {6, 32}, {}};
 }
@@ -639,6 +642,15 @@ void Engine::removerBoard(int remover, pair<int,int> index) {
 
 void Engine::updateGamestate() {
     checkStarUp();
+    gamestate.boardUnitCount = 0;
+
+    for (int row = 0; row < 4; row++) {
+        for (int col = 0; col < 7; col++) {
+            if (gamestate.board[row][col] != nullChamp) {
+                gamestate.boardUnitCount++;
+            }
+        }
+    }
 
     if (!(gamestate.tempSlot == nullChamp)) {
         for (int i = 0; i < 9; i++) {
@@ -661,6 +673,17 @@ void Engine::updateGamestate() {
             countedChampions.insert(champion.id);
             for (int trait : champion.traits) {
                 counts[trait]++;
+            }
+
+            for (Item item : champion.items) {
+                if (!holds_alternative<pair<int,int>>(item)) continue;
+
+                pair<int,int> completed = get<pair<int,int>>(item);
+
+                auto it = Set18::emblemTraits.find(completed);
+                if (it != Set18::emblemTraits.end()) {
+                    counts[it->second]++;
+                }
             }
         }
     }

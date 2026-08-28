@@ -210,6 +210,8 @@ namespace Set18 {
   extern const unordered_map<int, Vector3> hitboxOffsets;
   extern const unordered_map<int, float> groundOffsets;
 
+  extern const map<pair<int,int>, int> emblemTraits;
+
 //   extern const trait Adaptor;
 //   extern const trait ApexPredator;
 //   extern const trait Attuned;
