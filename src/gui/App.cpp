@@ -306,8 +306,8 @@ void App::run() {
         }
 
         if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
-            if (xpPressed && hoverXp) engine.levelup();
-            if (rerollPressed && hoverReroll) engine.roll();
+            if (xpPressed) engine.levelup();
+            if (rerollPressed) engine.roll();
 
             xpPressed = false;
             rerollPressed = false;
