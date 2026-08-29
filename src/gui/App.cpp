@@ -199,7 +199,7 @@ void App::run() {
         int hoveredCol = -1;
         int hoveredBench = -1;
         int hoveredShop = -1;
-        int hoveredItem = traits.GetHoveredItemSlot(GetMousePosition());
+        int hoveredItem = traits.GetHoveredItemSlot(GetMousePosition(), engine.gamestate.items.size());
 
         bool hoverXp = CheckCollisionPointRec(GetMousePosition(), shop.ShopXpRect());
         bool hoverReroll = CheckCollisionPointRec(GetMousePosition(), shop.ShopRerollRect());

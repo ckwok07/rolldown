@@ -29,7 +29,7 @@ public:
     void DrawTraitHexs(Engine& engine);
     void DrawTraits(Engine& engine, const Drag& drag);
 
-    void DrawTraitsVisuals();
+    void DrawTraitsVisuals(int sloutCount);
     void DrawItems(const vector<Item>& items, const Drag& drag);
 
     string GetItemName(const Item& item);
@@ -37,6 +37,6 @@ public:
 
     // mechanics
 
-    int GetHoveredItemSlot(Vector2 mousePos);
+    int GetHoveredItemSlot(Vector2 mousePos, int itemCount);
     void DrawDraggedItem(const vector<Item>& items, const Drag& drag);
 };

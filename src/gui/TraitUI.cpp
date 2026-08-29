@@ -2,6 +2,8 @@
 #include "Globals.h"
 #include "Engine.h"
 #include "raylib.h"
+#include "raymath.h"
+#include "rlgl.h"
 
 
 TraitUI::TraitUI(/* args */)
@@ -53,9 +55,9 @@ void TraitUI::DrawTraitHexs(Engine& engine) {
     }
 
     Rectangle bar = TraitBarRect();
-    const float top = bar.y + bar.height * 0.085f;
-    const float slotH = bar.height * 0.086f;
-    const float cx = bar.width * 0.92f;
+    const float top = bar.y + bar.height * 0.05f;
+    const float slotH = bar.height * 0.0845f;
+    const float cx = bar.width * (engine.gamestate.items.size() > 10 ? 1.52f : 0.92f);
     const int total = (int)engine.gamestate.activeTraits.size();
 
     int index = 0;
@@ -69,7 +71,8 @@ void TraitUI::DrawTraitHexs(Engine& engine) {
             continue;
         }
 
-        if (drawn >= 9) break;
+        int maxDrawn = total > 10 ? 9 : 10;
+        if (drawn >= maxDrawn) break;
 
         const float cy = top + drawn * slotH + slotH / 2.0f;
 
@@ -88,7 +91,7 @@ void TraitUI::DrawTraitHexs(Engine& engine) {
 
         const float rowH = slotH * 0.75f;
         const float pad = rowH * 0.2f;
-        const float hexRadius = bar.width * 0.23f;
+        const float hexRadius = bar.width * 0.21f;
         const float numberH = rowH * 0.62f;
         const float numberW = numberH * 0.9f;
         const float numberX = cx + hexRadius + rowH * 0.16f;
@@ -139,7 +142,55 @@ void TraitUI::DrawTraitHexs(Engine& engine) {
             {cx - size, overflowY - size}
         };
 
-        DrawTriangleFan(points, 5, SKYBLUE);
+        DrawTriangleFan(points, 5, BLACK);
+
+        float inset = 2.0f;
+        float innerSize = size - inset;
+
+        Vector2 innerPoints[5] = {
+            {cx - innerSize, overflowY + innerSize * 0.4f},
+            {cx, overflowY + innerSize},
+            {cx + innerSize, overflowY + innerSize * 0.4f},
+            {cx + innerSize, overflowY - innerSize},
+            {cx - innerSize, overflowY - innerSize}
+        };
+
+        Color bottomColor = {25, 45, 45, 255}, topColor = {28, 66, 66, 255};
+
+        rlBegin(RL_TRIANGLES);
+
+        rlColor4ub(bottomColor.r, bottomColor.g, bottomColor.b, bottomColor.a); rlVertex2f(innerPoints[0].x, innerPoints[0].y);
+        rlColor4ub(bottomColor.r, bottomColor.g, bottomColor.b, bottomColor.a); rlVertex2f(innerPoints[1].x, innerPoints[1].y);
+        rlColor4ub(topColor.r, topColor.g, topColor.b, topColor.a); rlVertex2f(innerPoints[4].x, innerPoints[4].y);
+
+        rlColor4ub(bottomColor.r, bottomColor.g, bottomColor.b, bottomColor.a); rlVertex2f(innerPoints[1].x, innerPoints[1].y);
+        rlColor4ub(topColor.r, topColor.g, topColor.b, topColor.a); rlVertex2f(innerPoints[3].x, innerPoints[3].y);
+        rlColor4ub(topColor.r, topColor.g, topColor.b, topColor.a); rlVertex2f(innerPoints[4].x, innerPoints[4].y);
+
+        rlColor4ub(bottomColor.r, bottomColor.g, bottomColor.b, bottomColor.a); rlVertex2f(innerPoints[1].x, innerPoints[1].y);
+        rlColor4ub(bottomColor.r, bottomColor.g, bottomColor.b, bottomColor.a); rlVertex2f(innerPoints[2].x, innerPoints[2].y);
+        rlColor4ub(topColor.r, topColor.g, topColor.b, topColor.a); rlVertex2f(innerPoints[3].x, innerPoints[3].y);
+
+        rlEnd();
+
+        inset = 1.5f;
+        innerSize = innerSize - inset;
+
+        Vector2 innerInnerPoints[5] = {
+            {cx - innerSize, overflowY + innerSize * 0.4f},
+            {cx, overflowY + innerSize},
+            {cx + innerSize, overflowY + innerSize * 0.4f},
+            {cx + innerSize, overflowY - innerSize},
+            {cx - innerSize, overflowY - innerSize}
+        };
+
+        DrawTriangleFan(innerInnerPoints, 5, {12, 26, 27, 255});
+
+        const char* moreText = TextFormat("+%d", remaining);
+        float fontSize = innerSize * 1.1f;
+        Vector2 textSize = MeasureTextEx(traitFont, moreText, fontSize, 0.0f);
+
+        DrawTextEx(traitFont, moreText, {cx - textSize.x / 2.0f, overflowY - textSize.y / 2.0f - 2.0f}, fontSize, 0.0f, WHITE);
     }
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
@@ -156,18 +207,19 @@ void TraitUI::DrawTraits(Engine& engine, const Drag& drag) {
     Rectangle bar = TraitBarRect();
 
     // DrawRectangleLinesEx(bar, 2.0f, SKYBLUE);
-    DrawTraitsVisuals();
+    int slotCount = engine.gamestate.items.size() <= 10 ? 10 : 20;
+    DrawTraitsVisuals(slotCount);
     DrawTraitHexs(engine);
     DrawItems(engine.gamestate.items, drag);
     DrawDraggedItem(engine.gamestate.items, drag);
 }
 
-void TraitUI::DrawTraitsVisuals() {
+void TraitUI::DrawTraitsVisuals(int sloutCount) {
     Rectangle rect = TraitBarRect();
 
-    Rectangle bar = {rect.x, rect.y + rect.height * 0.05f, rect.width * 0.99f, rect.height * 0.90f};
-    Rectangle upperrect = {rect.x, rect.y, rect.width * 0.60f, rect.height * 0.05f};
-    Rectangle lowerrect = {rect.x, rect.y + bar.height + rect.height * 0.05f, rect.width * 0.60f, rect.height * 0.05f};
+    Rectangle bar = {rect.x, rect.y + rect.height * 0.05f, rect.width * (sloutCount == 10 ? 0.99f : 1.59f), rect.height * 0.85f};
+    Rectangle upperrect = (sloutCount == 10) ? Rectangle{rect.x, rect.y, rect.width * 0.60f, rect.height * 0.05f} : Rectangle{rect.x, rect.y, rect.width * 0.60f * 2.0f, rect.height * 0.05f};
+    Rectangle lowerrect = (sloutCount == 10) ? Rectangle{rect.x, rect.y + bar.height + rect.height * 0.05f, rect.width * 0.60f, rect.height * 0.05f} : Rectangle{rect.x, rect.y + bar.height + rect.height * 0.05f, rect.width * 0.60f * 2.0f, rect.height * 0.05f};
 
     auto DrawLayer = [&](float inset, Color color) {
         float slope = (bar.y - upperrect.y) / ((bar.x + bar.width) - (upperrect.x + upperrect.width));
@@ -181,7 +233,7 @@ void TraitUI::DrawTraitsVisuals() {
         float joinY = slope * rightX + lineB;
 
         float bottomY = lowerrect.y + lowerrect.height - inset;
-        float bottomJoinY = rect.y + rect.height - (joinY - rect.y);
+        float bottomJoinY = lowerrect.y - (joinY - bar.y);
 
         Rectangle innerBar = {bar.x, joinY, rightX - bar.x, bottomJoinY - joinY};
         Rectangle innerUpperrect = {upperrect.x, topY, joinX - upperrect.x, joinY - topY};
@@ -202,33 +254,41 @@ void TraitUI::DrawTraitsVisuals() {
     DrawLayer(9.5f, Fade({42, 74, 72, 255}, 0.65f));
     DrawLayer(11.5f, {20, 31, 32, 255});
 
-    float gap = bar.height * 0.030f;
-    float squareSize = bar.width * 0.42f;
-    float y = bar.y + bar.height * 0.028f;
+    float gap = bar.height * 0.020f;
+    float baseBarWidth = rect.width * 0.99f;
+    float squareSize = baseBarWidth * 0.46f;
+    float startX = bar.x + baseBarWidth * 0.13f;
+    float startY = bar.y + bar.height * 0.01f;
 
-    for (int i = 0; i < 10; i++) {
-        Rectangle square = {bar.x + bar.width * 0.13f, y, squareSize, squareSize};
+    for (int i = 0; i < sloutCount; i++) {
+        int col = i / 10;
+        int row = i % 10;
+
+        Rectangle square = {startX + col * (squareSize + gap), startY + row * (squareSize + gap), squareSize, squareSize};
         DrawRectangleRec(square, BLACK);
-        y = y + squareSize + gap;
     }
 }
 
 void TraitUI::DrawItems(const vector<Item>& items, const Drag& drag) {
     Rectangle rect = TraitBarRect();
+    Rectangle bar = {rect.x, rect.y + rect.height * 0.05f, rect.width * 0.99f, rect.height * 0.85f};
 
-    Rectangle bar = {rect.x, rect.y + rect.height * 0.05f, rect.width * 0.99f, rect.height * 0.90f};
-    Rectangle upperrect = {rect.x, rect.y, rect.width * 0.60f, rect.height * 0.05f};
-    Rectangle lowerrect = {rect.x, rect.y + bar.height + rect.height * 0.05f, rect.width * 0.60f, rect.height * 0.05f};
+    float gap = bar.height * 0.020f;
+    float baseBarWidth = rect.width * 0.99f;
+    float squareSize = baseBarWidth * 0.46f;
+    float startX = bar.x + baseBarWidth * 0.13f;
+    float startY = bar.y + bar.height * 0.01f;
 
-    float gap = bar.height * 0.030f;
-    float squareSize = bar.width * 0.42f;
-    float y = bar.y + bar.height * 0.028f;
+    int count = std::min((int)items.size(), 20);
 
-    for (int i = 0; i < 10; i++) {
-        Rectangle square = {bar.x + bar.width * 0.13f, y, squareSize, squareSize};
+    for (int i = 0; i < count; i++) {
+        int col = i / 10;
+        int row = i % 10;
+
+        Rectangle square = {startX + col * (squareSize + gap), startY + row * (squareSize + gap), squareSize, squareSize};
 
         const DragState& state = drag.GetState();
-        if (i < items.size() && !(state.phase == DragPhase::Dragging && state.payload == DragPayload::Item && state.source.zone == Zone::Inventory && state.source.index == i)) {
+        if (!(state.phase == DragPhase::Dragging && state.payload == DragPayload::Item && state.source.zone == Zone::Inventory && state.source.index == i)) {
             Texture2D* texture = GetItemTexture(items[i]);
 
             if (texture != nullptr) {
@@ -238,7 +298,6 @@ void TraitUI::DrawItems(const vector<Item>& items, const Drag& drag) {
                 DrawTexturePro(*texture, source, itemRect, {0, 0}, 0.0f, WHITE);
             }
         }
-        y = y + squareSize + gap;
     }
 }
 
@@ -284,24 +343,24 @@ Texture2D* TraitUI::GetItemTexture(const Item& item) {
     itemTextures[itemName] = texture;
     return &itemTextures[itemName];
 }
-
-int TraitUI::GetHoveredItemSlot(Vector2 mousePos) {
+int TraitUI::GetHoveredItemSlot(Vector2 mousePos, int itemCount) {
     Rectangle rect = TraitBarRect();
+    Rectangle bar = {rect.x, rect.y + rect.height * 0.05f, rect.width * 0.99f, rect.height * 0.85f};
 
-    Rectangle bar = {rect.x, rect.y + rect.height * 0.05f, rect.width * 0.99f, rect.height * 0.90f};
+    float gap = bar.height * 0.020f;
+    float squareSize = bar.width * 0.46f;
+    float startX = bar.x + bar.width * 0.13f;
+    float startY = bar.y + bar.height * 0.01f;
 
-    float gap = bar.height * 0.030f;
-    float squareSize = bar.width * 0.42f;
-    float y = bar.y + bar.height * 0.028f;
+    int count = std::min(itemCount, 20);
 
-    for (int i = 0; i < 10; i++) {
-        Rectangle square = {bar.x + bar.width * 0.13f, y, squareSize, squareSize};
+    for (int i = 0; i < count; i++) {
+        int col = i / 10;
+        int row = i % 10;
 
-        if (CheckCollisionPointRec(mousePos, square)) {
-            return i;
-        }
+        Rectangle square = {startX + col * (squareSize + gap), startY + row * (squareSize + gap), squareSize, squareSize};
 
-        y = y + squareSize + gap;
+        if (CheckCollisionPointRec(mousePos, square)) return i;
     }
 
     return -1;
