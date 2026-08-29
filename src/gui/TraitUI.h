@@ -18,6 +18,12 @@ private:
     Font uiFont = {};
 
     std::unordered_map<std::string, Texture2D> itemTextures;
+
+    Texture2D bronzeTrait;
+    Texture2D silverTrait;
+    Texture2D goldTrait;
+    Texture2D prismaticTrait;
+    Texture2D uniqueTrait;
 public:
     TraitUI(/* args */);
     ~TraitUI();

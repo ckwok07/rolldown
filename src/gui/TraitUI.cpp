@@ -20,6 +20,12 @@ void TraitUI::init() {
 
     SetTextureFilter(traitFont.texture, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(uiFont.texture, TEXTURE_FILTER_BILINEAR);
+
+    bronzeTrait = LoadTexture("assets/global/bronze.png");
+    silverTrait = LoadTexture("assets/global/silver.png");
+    goldTrait = LoadTexture("assets/global/gold.png");
+    prismaticTrait = LoadTexture("assets/global/prismatic.png");
+    uniqueTrait = LoadTexture("assets/global/unique.png");
 }
 
 void TraitUI::shutdown() {
@@ -33,6 +39,12 @@ void TraitUI::shutdown() {
     }
 
     itemTextures.clear();
+
+    UnloadTexture(bronzeTrait);
+    UnloadTexture(silverTrait);
+    UnloadTexture(goldTrait);
+    UnloadTexture(prismaticTrait);
+    UnloadTexture(uniqueTrait);
 }
 
 Rectangle TraitUI::TraitBarRect() {
@@ -123,7 +135,32 @@ void TraitUI::DrawTraitHexs(Engine& engine) {
 
         DrawTextEx(traitFont, name.c_str(), {textX, nameY}, 15.0f, 0.5f, WHITE);
         DrawTextEx(traitFont, thresholds.c_str(), {textX, thresholdY}, 13.0f, 0.5f, GRAY);
-        DrawPoly({cx, cy}, 6, hexRadius, 30.0f, SKYBLUE);
+        DrawPoly({cx, cy}, 6, hexRadius, 30.0f, BLACK);
+        
+
+        if (entry.tier != 0) {
+            bool unique = tiersIt != traitTable->end() && tiersIt->second.first.size() == 1 && tiersIt->second.first[0] == 1;
+
+            Texture2D* texture = nullptr;
+
+            if (unique) texture = &uniqueTrait;
+            else if (entry.tier == 1) texture = &bronzeTrait;
+            else if (entry.tier == 2) texture = &silverTrait;
+            else if (entry.tier == 3) texture = &goldTrait;
+            else if (entry.tier == 4) texture = &prismaticTrait;
+
+            float scale = 1.90f;
+            float xOffset = 0.0f;
+            float yOffset = 0.0f;
+            float size = hexRadius * 2.0f * scale;
+
+            Rectangle source = {0.0f, 0.0f, (float)texture->width, (float)texture->height};
+            Rectangle destination = {cx - size / 2.0f + xOffset, cy - size / 2.0f + yOffset, size, size};
+
+            DrawTexturePro(*texture, source, destination, {0.0f, 0.0f}, 0.0f, WHITE);
+        } else {
+            DrawPoly({cx, cy}, 6, hexRadius * 0.90, 30.0f, GRAY);
+        }
 
         drawn++;
         index++;
