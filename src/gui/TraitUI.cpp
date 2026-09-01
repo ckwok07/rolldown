@@ -159,7 +159,8 @@ void TraitUI::DrawTraitHexs(Engine& engine) {
 
             DrawTexturePro(*texture, source, destination, {0.0f, 0.0f}, 0.0f, WHITE);
         } else {
-            DrawPoly({cx, cy}, 6, hexRadius * 0.90, 30.0f, GRAY);
+            DrawPoly({cx, cy}, 6, hexRadius * 0.90, 30.0f, {84,84,84,255});
+            DrawPoly({cx, cy}, 6, hexRadius * 0.80, 30.0f, {16,16,17,255});
         }
 
         drawn++;
@@ -302,7 +303,9 @@ void TraitUI::DrawTraitsVisuals(int sloutCount) {
         int row = i % 10;
 
         Rectangle square = {startX + col * (squareSize + gap), startY + row * (squareSize + gap), squareSize, squareSize};
-        DrawRectangleRec(square, BLACK);
+        DrawRectangleRec(square, {84,84,84,255});
+        Rectangle inner = {startX + col * (squareSize + gap) + squareSize * 0.04f, startY + row * (squareSize + gap) + squareSize * 0.04f, squareSize * 0.92f, squareSize * 0.92f};
+        DrawRectangleRec(inner, {16,16,16,255});
     }
 }
 
